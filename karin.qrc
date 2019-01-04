@@ -1,0 +1,7 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file>resc/image/icon-m-common-directory.png</file>
+    <file>resc/image/icon-m-content-document.png</file>
+    <file>debian/changelog</file>
+</qresource>
+</RCC>
