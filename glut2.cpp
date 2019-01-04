@@ -173,7 +173,7 @@ void karinCube_MinMax(const GLfloat v1[3], const GLfloat v2[3], material_s *r)
     karinCubeVertex(v1, v2, v);
 
     int i;
-    unsigned int count = countof(CubePlane4Index);
+    int count = countof(CubePlane4Index);
     newmat(r, count);
     for(i = 0; i < count; i++)
     {
@@ -364,7 +364,7 @@ void newmat(material_s *mat, int count)
     mat->use_color = true;
 }
 
-void rendermesh(mesh_s *mesh)
+void rendermesh(const mesh_s *mesh)
 {
     int i;
     if(!mesh)
@@ -375,7 +375,7 @@ void rendermesh(mesh_s *mesh)
     }
 }
 
-void rendermat(material_s *mat)
+void rendermat(const material_s *mat)
 {
     bool use_tex;
     if(!mat)

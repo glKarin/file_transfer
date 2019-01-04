@@ -49,8 +49,8 @@ typedef struct _mesh_s
     int count;
 } mesh_s;
 
-void rendermesh(mesh_s *mesh);
-void rendermat(material_s *mesh);
+void rendermesh(const mesh_s *mesh);
+void rendermat(const material_s *mesh);
 void freemesh(mesh_s *mesh);
 void freemat(material_s *mat);
 void newmesh(mesh_s *mesh, int count);

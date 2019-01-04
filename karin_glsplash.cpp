@@ -14,16 +14,17 @@
 }
 #define M_CUBE_ROTATION_SENS 0.2
 
-static unsigned render_type = 1;
+static unsigned render_type = 1; // for testing mask
 
 karin_GLSplash::karin_GLSplash(QWidget *parent) :
     QGLWidget(parent),
-    m_viewpos(QVector3D(7.45058e-08, 2.8, 6.4)),
-    m_scale(QVector3D(1.0, 1.0, 1.0)),
-    m_viewangle(QVector3D(30, 343, 0.0)),
-    m_cubeangle(QVector3D(0.0, 0.0, 0.0)),
-    m_lightpos(QVector3D(2.0, 1.8, 0.5)),
-   // m_lightpos(QVector3D(-2.9, 1.8, 0.1)),
+    m_viewpos(Vector3D(7.45058e-08, 2.8, 6.4)),
+    m_scale(Vector3D(1.0, 1.0, 1.0)),
+    m_viewangle(Vector3D(30, 343, 0.0)),
+    m_cubeangle(Vector3D(0.0, 0.0, 0.0)),
+    m_lightpos(Vector3D(2.0, 1.8, 0.5)),
+   // m_lightpos(Vector3D(-2.9, 1.8, 0.1)),
+    m_dirlighting(false),
     m_pressed(false),
     m_cubersens(M_CUBE_ROTATION_SENS),
     m_movesens(0.1),
@@ -62,22 +63,26 @@ void karin_GLSplash::init()
 
     GLfloat min2[] = {-4.0, -2.0, -0.5};
     GLfloat max2[] = {-3.0, -1.0, 0.5};
+    GLfloat min3[] = {-4.0, -2.0, 0.0};
+    GLfloat max3[] = {-3.0, -1.0, 1.0};
 
     GLfloat minp[] = {-8.0, -2.0, 8.0};
     GLfloat maxp[] = {8.0, -2.0, -8.0};
 
     memset(&m_mesh, 0, sizeof(mesh_s));
-    newmesh(&m_mesh, 3);
-    karinCube_MinMax(min, max, m_mesh.materials);
-    m_mesh.materials[0].use_color = false;
+    newmesh(&m_mesh, 4);
 
-    karinPlane_MinMax(minp, maxp, m_mesh.materials + 1);
-    m_mesh.materials[1].color[0] = m_mesh.materials[1].color[1] = m_mesh.materials[1].color[2] = 0.5;
-    m_mesh.materials[1].color[3] = 1.0;
-    m_mesh.materials[1].use_color = true;
+    karinPlane_MinMax(minp, maxp, m_mesh.materials);
+    m_mesh.materials[0].color[0] = m_mesh.materials[0].color[1] = m_mesh.materials[0].color[2] = 0.5;
+    m_mesh.materials[0].color[3] = 1.0;
+    m_mesh.materials[0].use_color = true;
 
+    karinCube_MinMax(min, max, m_mesh.materials + 1);
+    m_mesh.materials[1].use_color = false;
     karinCube_MinMax(min2, max2, m_mesh.materials + 2);
     m_mesh.materials[2].use_color = false;
+    karinCube_MinMax(min3, max3, m_mesh.materials + 3);
+    m_mesh.materials[3].use_color = false;
 }
 
 void karin_GLSplash::deinit()
@@ -109,17 +114,17 @@ void karin_GLSplash::paintGL()
 	static const QString Fmt("(%1, %2, %3) [%4, %5]");
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    glLoadIdentity();
+    glEnableClientState(GL_VERTEX_ARRAY);
     glPushMatrix();
     {
-        glRotatef(m_viewangle.x(), 1, 0, 0);
-        glRotatef(m_viewangle.y(), 0, 1, 0);
-        glTranslatef(-m_viewpos.x(), -m_viewpos.y(), -m_viewpos.z());
+        glLoadIdentity();
 
-        glEnableClientState(GL_VERTEX_ARRAY);
+        setcamera();
+
+        // lighting source
         glPushMatrix();
         {
-            glTranslatef(m_lightpos.x(), m_lightpos.y(), m_lightpos.z());
+            glTranslatef(VECTOR3_X(m_lightpos), VECTOR3_Y(m_lightpos), VECTOR3_Z(m_lightpos));
             glColor4f(1.0, 1.0, 1.0, 1.0);
             GLfloat lp[] = {0, 0, 0};
             glVertexPointer(3, GL_FLOAT, 0, lp);
@@ -127,11 +132,12 @@ void karin_GLSplash::paintGL()
         }
         glPopMatrix();
 
-        calevol();
+        // render scene
+        rendershadow();
 
-        glDisableClientState(GL_VERTEX_ARRAY);
     }
     glPopMatrix();
+    glDisableClientState(GL_VERTEX_ARRAY);
 	//qDebug()<< (Fmt.arg(m_viewpos.x()).arg(m_viewpos.y()).arg(m_viewpos.z()).arg(m_viewangle.x()).arg(m_viewangle.y()));
     glFlush();
 }
@@ -145,36 +151,35 @@ void karin_GLSplash::resizeGL(int w, int h)
     glMatrixMode(GL_MODELVIEW);
 }
 
-typedef struct _line_s
+void karin_GLSplash::setcamera() const
 {
-    QVector3D a;
-    QVector3D b;
-    bool operator==(const _line_s &o)
-    {
-        return((a == o.a && b == o.b)
-               || (a == o.b && b == o.a));
-    }
-    template <int I> void set(const GLfloat v[3])
-    {
-        if(!v)
-            return;
-        QVector3D &p = I == 0 ? a : b;
-        p.setX(v[0]);
-        p.setY(v[1]);
-        p.setZ(v[2]);
-    }
-    template <int I> void get(GLfloat v[3]) const
-    {
-        if(!v)
-            return;
-        const QVector3D &p = I == 0 ? a : b;
-        v[0] = (p.x());
-        v[1] = (p.y());
-        v[2] = (p.z());
-    }
-} line_s;
+    glRotatef(VECTOR3_X(m_viewangle), 1, 0, 0);
+    glRotatef(VECTOR3_Y(m_viewangle), 0, 1, 0);
+    glTranslatef(-VECTOR3_X(m_viewpos), -VECTOR3_Y(m_viewpos), -VECTOR3_Z(m_viewpos));
+}
 
-void karin_GLSplash::caletrans(material_s *r, const material_s *src, const GLmatrix *mat)
+vector3_s karin_GLSplash::lightingdir(const GLfloat v[3], const vector3_s &lightpos, bool dirlight) const
+{
+    bool d;
+    vector3_s r;
+
+    d = !v ? true : dirlight;
+
+    if(d)
+    {
+        r = vector3_normalize(&lightpos);
+        vector3_invert_self(&r);
+    }
+    else
+    {
+        r = Vector3D(v);
+        r = vector3_direction(&lightpos, &r);
+    }
+
+    return r;
+}
+
+void karin_GLSplash::caletrans(material_s *r, const material_s *src, const GLmatrix *mat) const
 {
     GLmatrix nor_mat;
 
@@ -193,14 +198,13 @@ void karin_GLSplash::caletrans(material_s *r, const material_s *src, const GLmat
 
     Mesa_AllocGLMatrix(&nor_mat);
     Mesa_NormalMatrix(&nor_mat, mat->m);
+
     for(int i = 0; i < src->count; i++)
     {
         Mesa_glTransform(r->points[i].normal, src->points[i].normal, &nor_mat);
-        QVector3D n(r->points[i].normal[0], r->points[i].normal[1], r->points[i].normal[2]);
-        n.normalize();
-        r->points[i].normal[0] = n.x();
-        r->points[i].normal[1] = n.y();
-        r->points[i].normal[2] = n.z();
+        vector3_s n = Vector3D(r->points[i].normal);
+        vector3_normalize_self(&n);
+        vector3_s_to_GLfloatv(r->points[i].normal, n);
     }
 
 #if 0
@@ -221,7 +225,9 @@ void karin_GLSplash::caletrans(material_s *r, const material_s *src, const GLmat
     Mesa_FreeGLMatrix(&nor_mat);
 }
 
-void karin_GLSplash::shadowvol(mesh_s *r, const QVector3D &lightpos, const material_s *mat)
+
+// cale shadow volumn
+void karin_GLSplash::shadowvol(mesh_s *r, const vector3_s &lightpos, const material_s *mat) const
 {
     bool has;
     line_s lp;
@@ -230,21 +236,22 @@ void karin_GLSplash::shadowvol(mesh_s *r, const QVector3D &lightpos, const mater
     material_s *m;
     QList<line_s> lines;
     const GLfloat vol_len = 10;
-    QList<QVector3D> tops, bottoms;
+    QList<vector3_s> tops, bottoms;
     GLfloat *v;
 
     if(!r || !mat || !mat->count)
         return;
 
-    newmesh(r, 3); // top bottom caps, and vol side
+    newmesh(r, 3); // top[1] bottom[2] caps, and side[0]
     for(int i = 0; i < mat->count / 3; i++) // cale triangle
     {
         pa = mat->points + (i * 3);
         v = pa->vertex;
-        QVector3D nor(pa->normal[0], pa->normal[1], pa->normal[2]);
-        QVector3D p(v[0], v[1], v[2]);
-        QVector3D p2l = QVector3D(lightpos - p).normalized();
-        float dot_p = QVector3D::dotProduct(p2l, nor);
+        vector3_s nor = Vector3D(pa->normal);
+        //vector3_s p = Vector3D(v);
+        vector3_s p2l = lightingdir(v, lightpos, m_dirlighting);
+        vector3_invert_self(&p2l);
+        float dot_p = vector3_dot(&p2l, &nor);
         //qDebug()<<i<<nor<<p<<dot_p;
         if(dot_p > 0.0) // face to light source
         {
@@ -255,7 +262,7 @@ void karin_GLSplash::shadowvol(mesh_s *r, const QVector3D &lightpos, const mater
                 has = false;
                 for(int m = 0; m < lines.size(); m++) // find in lines list
                 {
-                    if(lp == lines.at(m)) // if exists, continue
+                    if(lp == lines.at(m)) // if exists, remove this line, then continue
                     {
                         //qDebug()<<"exist";
                         lines.removeAt(m);
@@ -263,18 +270,20 @@ void karin_GLSplash::shadowvol(mesh_s *r, const QVector3D &lightpos, const mater
                         break;
                     }
                 }
-                if(!has) // if not exists, add line to list
+                if(!has) // if not exists, add new line to list
                     lines.push_back(lp);
             }
-            tops << fv4toqvec3(pa[0].vertex)
-             << fv4toqvec3(pa[1].vertex)
-              << fv4toqvec3(pa[2].vertex);
+            // top cap triangle
+            tops << Vector4D(pa[0].vertex)
+             << Vector4D(pa[1].vertex)
+              << Vector4D(pa[2].vertex);
         }
         else
         {
-            bottoms << fv4toqvec3(pa[0].vertex)
-             << fv4toqvec3(pa[1].vertex)
-              << fv4toqvec3(pa[2].vertex);
+            // bottom cap triangle
+            bottoms << Vector4D(pa[0].vertex)
+             << Vector4D(pa[1].vertex)
+              << Vector4D(pa[2].vertex);
         }
     }
 #if 0
@@ -297,116 +306,86 @@ void karin_GLSplash::shadowvol(mesh_s *r, const QVector3D &lightpos, const mater
     glEnable(GL_DEPTH_TEST);
 #endif
 
+    // cale sides of shadow volumn
     m = r->materials;
-    newmat(m, lines.size() * 6);
+    newmat(m, lines.size() * 6); // 2 triangles(6 points) every a line
     k = 0;
+    // TODO: cale clock wise, now the lighting source must be above all cubes
     Q_FOREACH(const line_s &l, lines)
     {
-        QVector3D dir_a = QVector3D(l.a) - m_lightpos;
-        dir_a.normalize();
-        dir_a *= vol_len;
-        QVector3D dir_b = QVector3D(l.b) - m_lightpos;
-        dir_b.normalize();
-        dir_b *= vol_len;
+        // point lighting
+        vector3_s dir_a = lightingdir(l.a.v, lightpos, m_dirlighting);
+		vector3_scale_self(&dir_a, vol_len);
+        vector3_s dir_b = lightingdir(l.b.v, lightpos, m_dirlighting);
+		vector3_scale_self(&dir_b, vol_len);
 
+        // triangle 1
         pa = m->points + k * 6;
-        pa->vertex[0] = l.a.x();
-        pa->vertex[1] = l.a.y();
-        pa->vertex[2] = l.a.z();
-        pa->vertex[3] = 1;
+		vector3_s_to_GLfloatv(pa->vertex, l.a);
         pa = m->points + k * 6 + 1;
-        pa->vertex[0] = dir_a.x();
-        pa->vertex[1] = dir_a.y();
-        pa->vertex[2] = dir_a.z();
-        pa->vertex[3] = 1;
+		vector3_s_to_GLfloatv(pa->vertex, dir_a);
         pa = m->points + k * 6 + 2;
-        pa->vertex[0] = l.b.x();
-        pa->vertex[1] = l.b.y();
-        pa->vertex[2] = l.b.z();
-        pa->vertex[3] = 1;
+		vector3_s_to_GLfloatv(pa->vertex, l.b);
 
+        // triangle 2
         pa = m->points + k * 6 + 3;
-        pa->vertex[0] = dir_a.x();
-        pa->vertex[1] = dir_a.y();
-        pa->vertex[2] = dir_a.z();
-        pa->vertex[3] = 1;
+		vector3_s_to_GLfloatv(pa->vertex, dir_a);
         pa = m->points + k * 6 + 4;
-        pa->vertex[0] = dir_b.x();
-        pa->vertex[1] = dir_b.y();
-        pa->vertex[2] = dir_b.z();
-        pa->vertex[3] = 1;
+		vector3_s_to_GLfloatv(pa->vertex, dir_b);
         pa = m->points + k * 6 + 5;
-        pa->vertex[0] = l.b.x();
-        pa->vertex[1] = l.b.y();
-        pa->vertex[2] = l.b.z();
-        pa->vertex[3] = 1;
+		vector3_s_to_GLfloatv(pa->vertex, l.b);
 
         k++;
     }
 
+    // cale top cap of shadow volumn
+    // using triangles of the mesh faces to lighting source
     m = r->materials + 1;
     newmat(m, tops.size());
     for(k = 0; k < tops.size(); k += 3)
     {
-        const QVector3D &first = tops[k];
-        const QVector3D &sec = tops[k + 1];
-        const QVector3D &third = tops[k + 2];
+        const vector3_s &first = tops[k];
+        const vector3_s &sec = tops[k + 1];
+        const vector3_s &third = tops[k + 2];
         pa = m->points + k;
-        pa->vertex[0] = first.x();
-        pa->vertex[1] = first.y();
-        pa->vertex[2] = first.z();
-        pa->vertex[3] = 1;
+		vector3_s_to_GLfloatv(pa->vertex, first);
         pa = m->points + k + 1;
-        pa->vertex[0] = sec.x();
-        pa->vertex[1] = sec.y();
-        pa->vertex[2] = sec.z();
-        pa->vertex[3] = 1;
+		vector3_s_to_GLfloatv(pa->vertex, sec);
         pa = m->points + k + 2;
-        pa->vertex[0] = third.x();
-        pa->vertex[1] = third.y();
-        pa->vertex[2] = third.z();
-        pa->vertex[3] = 1;
+		vector3_s_to_GLfloatv(pa->vertex, third);
     }
 
+    // cale bottom cap of shadow volumn
+    // using triangles of the mesh not faces to lighting source
     m = r->materials + 2;
     newmat(m, bottoms.size());
     for(k = 0; k < bottoms.size(); k += 3)
     {
-        const QVector3D &first = bottoms[k];
-        const QVector3D &sec = bottoms[k + 1];
-        const QVector3D &third = bottoms[k + 2];
-        QVector3D dir_a = first - m_lightpos;
-        dir_a.normalize();
-        dir_a *= vol_len;
-        QVector3D dir_b = sec - m_lightpos;
-        dir_b.normalize();
-        dir_b *= vol_len;
-        QVector3D dir_c = third - m_lightpos;
-        dir_c.normalize();
-        dir_c *= vol_len;
+        const vector3_s &first = bottoms[k];
+        const vector3_s &sec = bottoms[k + 1];
+        const vector3_s &third = bottoms[k + 2];
+
+        // point lighting
+        vector3_s dir_a = lightingdir(first.v, lightpos, m_dirlighting);
+		vector3_scale_self(&dir_a, vol_len);
+        vector3_s dir_b = lightingdir(sec.v, lightpos, m_dirlighting);
+		vector3_scale_self(&dir_b, vol_len);
+        vector3_s dir_c = lightingdir(third.v, lightpos, m_dirlighting);
+		vector3_scale_self(&dir_c, vol_len);
 
         pa = m->points + k;
-        pa->vertex[0] = dir_a.x();
-        pa->vertex[1] = dir_a.y();
-        pa->vertex[2] = dir_a.z();
-        pa->vertex[3] = 1;
+		vector3_s_to_GLfloatv(pa->vertex, dir_a);
         pa = m->points + k + 1;
-        pa->vertex[0] = dir_b.x();
-        pa->vertex[1] = dir_b.y();
-        pa->vertex[2] = dir_b.z();
-        pa->vertex[3] = 1;
+		vector3_s_to_GLfloatv(pa->vertex, dir_b);
         pa = m->points + k + 2;
-        pa->vertex[0] = dir_c.x();
-        pa->vertex[1] = dir_c.y();
-        pa->vertex[2] = dir_c.z();
-        pa->vertex[3] = 1;
+		vector3_s_to_GLfloatv(pa->vertex, dir_c);
     }
 
 #if 0
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     //glDisable(GL_DEPTH_TEST);
 
-glCullFace(GL_FRONT);
+    glCullFace(GL_FRONT);
     glLineWidth(4.0);
 
     glDisable(GL_BLEND);
@@ -425,61 +404,74 @@ glCullFace(GL_FRONT);
 #endif
 }
 
-void karin_GLSplash::calevol()
+void karin_GLSplash::rendershadow()
 {
-    GLmatrix mat;
-    QVector3D light_dir(0, 1, 0);
-    mesh_s vol, vol2;
-    material_s cube, cube2;
+    GLmatrix *mat;
+    vector3_s light_dir = Vector3D(0, 1, 0);
+    mesh_s *vol;
+    mesh_s cube;
+    const int Mesh_Count = 3;
 
-    memset(&vol, 0, sizeof(mesh_s));
-    memset(&cube, 0, sizeof(material_s));
-    memset(&vol2, 0, sizeof(mesh_s));
-    memset(&cube2, 0, sizeof(material_s));
+    memset(&cube, 0, sizeof(mesh_s));
+    newmesh(&cube,Mesh_Count);
 
-    Mesa_AllocGLMatrix(&mat);
-    Mesa_glLoadIdentity(&mat);
-    Mesa_glRotate(&mat, m_cubeangle.x(), 1, 0, 0);
-    Mesa_glRotate(&mat, m_cubeangle.y(), 0, 1, 0);
-    Mesa_glRotate(&mat, m_cubeangle.z(), 0, 0, 1); // ??
+    vol = (mesh_s *)calloc(Mesh_Count, sizeof(mesh_s));
+    mat = (GLmatrix *)calloc(Mesh_Count, sizeof(GLmatrix));
 
-    caletrans(&cube, m_mesh.materials, &mat);
-    shadowvol(&vol, m_lightpos, &cube);
+    for(int i = 0; i < Mesh_Count; i++)
+    {
+        Mesa_AllocGLMatrix(mat + i);
+        Mesa_glLoadIdentity(mat + i);
+    }
 
-    Mesa_glLoadIdentity(&mat);
-    //Mesa_glRotate(&mat, 45, 0, 1, 0);
+    // 1
+    Mesa_glRotate(mat, VECTOR3_X(m_cubeangle), 1, 0, 0);
+    Mesa_glRotate(mat, VECTOR3_Y(m_cubeangle), 0, 1, 0);
+    Mesa_glRotate(mat, VECTOR3_Z(m_cubeangle), 0, 0, 1); // ??
+    // 2
+    //Mesa_glRotate(mat + 1, 45, 0, 1, 0);
+    // 3
+    Mesa_glRotate(mat + 2, 59, 0, 1, 0);
 
-    caletrans(&cube2, m_mesh.materials + 2, &mat);
-    shadowvol(&vol2, m_lightpos, &cube2);
+    for(int i = 0; i < Mesh_Count; i++)
+    {
+        caletrans(cube.materials + i, m_mesh.materials + i + 1, mat + i);
+        shadowvol(vol + i, m_lightpos, cube.materials + i);
+    }
 
+    // render
+    // 1: get depth buffer of scene
     glDisable(GL_BLEND);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    drawscene(false, true);
-    glEnableClientState(GL_COLOR_ARRAY);
-    rendermat(&cube);
-    rendermat(&cube2);
-    glDisableClientState(GL_COLOR_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
+
+    drawscene(&cube, true);
     //goto __Exit;
 
+    // 2: Z-Fail
     glDepthMask(GL_FALSE);
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glEnable(GL_STENCIL_TEST);
     glStencilFunc(GL_ALWAYS, 0, ~0);
 
+    // 2-1: cale front faces of shadow volumn
     glStencilOp(GL_KEEP, GL_INCR, GL_KEEP);
     glCullFace(GL_FRONT);
-    rendermesh(&vol);
-    rendermesh(&vol2);
+    for(int i = 0; i < Mesh_Count; i++)
+    {
+        rendermesh(vol + i);
+    }
 
+    // 2-1: cale back faces of shadow volumn
     glStencilOp(GL_KEEP, GL_DECR, GL_KEEP);
     glCullFace(GL_BACK);
-    rendermesh(&vol);
-    rendermesh(&vol2);
+    for(int i = 0; i < Mesh_Count; i++)
+    {
+        rendermesh(vol + i);
+    }
 
+    // 3: final render scene again
     glCullFace(GL_BACK);
-    glDepthFunc(GL_EQUAL);
+    glDepthFunc(GL_EQUAL); // GL_LESS will not pass depth-testing
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glDepthMask(GL_TRUE);
     glStencilFunc(GL_EQUAL, 0, ~0);
@@ -487,39 +479,41 @@ void karin_GLSplash::calevol()
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
     glEnable(GL_BLEND);
 
-    glEnableClientState(GL_NORMAL_ARRAY);
-    drawscene(false, true);
-    glEnableClientState(GL_COLOR_ARRAY);
-    rendermat(&cube);
-    rendermat(&cube2);
-    glDisableClientState(GL_COLOR_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
+    drawscene(&cube, true);
 
+    // 4: reset OpenGL state
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_COLOR);
     glDisable(GL_STENCIL_TEST);
     glDisable(GL_BLEND);
     glDepthFunc(GL_LESS);
 
 __Exit:
-    freemat(&cube);
-    freemesh(&vol);
-    freemat(&cube2);
-    freemesh(&vol2);
-    Mesa_FreeGLMatrix(&mat);
+    for(int i = 0; i < Mesh_Count; i++)
+    {
+        Mesa_FreeGLMatrix(mat + i);
+        freemesh(vol + i);
+    }
+    free(mat);
+    free(vol);
+    freemesh(&cube);
 }
 
-void karin_GLSplash::drawscene(bool cube, bool plane)
+void karin_GLSplash::drawscene(const mesh_s *cube, bool plane) const
 {
-    // cube
-    if(cube)
-    {
-        rendermat(m_mesh.materials);
-    }
-	
-    // plane
     if(plane)
     {
-        rendermat(m_mesh.materials + 1);
+        glEnableClientState(GL_NORMAL_ARRAY);
+        rendermat(m_mesh.materials);
+        glDisableClientState(GL_NORMAL_ARRAY);
+    }
+
+    if(cube)
+    {
+        glEnableClientState(GL_NORMAL_ARRAY);
+        glEnableClientState(GL_COLOR_ARRAY);
+        rendermesh(cube);
+        glDisableClientState(GL_COLOR_ARRAY);
+        glDisableClientState(GL_NORMAL_ARRAY);
     }
 }
 
@@ -536,6 +530,8 @@ void karin_GLSplash::mousePressEvent(QMouseEvent* event)
 
 void karin_GLSplash::mouseMoveEvent(QMouseEvent* event)
 {
+	vector3_s v;
+	
     if(m_pressed)
     {
         if(event->modifiers() & Qt::ControlModifier)
@@ -544,9 +540,10 @@ void karin_GLSplash::mouseMoveEvent(QMouseEvent* event)
             QPoint delta = (QCursor::pos() - center) * m_turnsens;
             if(!delta.isNull())
             {
-                m_viewangle += QVector3D(delta.y(), delta.x(), 0);
-                m_viewangle.setX(clampangle(m_viewangle.x()));
-                m_viewangle.setY(clampangle(m_viewangle.y()));
+                v = Vector3D(delta.y(), delta.x(), 0);
+                m_viewangle = vector3_add(&m_viewangle, &v);
+                VECTOR3_X(m_viewangle) = clampangle(VECTOR3_X(m_viewangle));
+                VECTOR3_Y(m_viewangle) = clampangle(VECTOR3_Y(m_viewangle));
                 updateGL();
             }
             QCursor::setPos(center);
@@ -557,9 +554,10 @@ void karin_GLSplash::mouseMoveEvent(QMouseEvent* event)
             m_lastpos = event->pos();
             if(!delta.isNull())
             {
-                m_cubeangle += QVector3D(delta.y(), delta.x(), 0);
-                m_cubeangle.setX(clampangle(m_cubeangle.x()));
-                m_cubeangle.setY(clampangle(m_cubeangle.y()));
+                v = Vector3D(delta.y(), delta.x(), 0);
+                m_cubeangle = vector3_add(&m_viewangle, &v);
+                VECTOR3_X(m_cubeangle) = clampangle(VECTOR3_X(m_cubeangle));
+                VECTOR3_Y(m_cubeangle) = clampangle(VECTOR3_Y(m_cubeangle));
                 updateGL();
             }
         }
@@ -589,24 +587,24 @@ void karin_GLSplash::keyReleaseEvent(QKeyEvent *event)
 
 void karin_GLSplash::transform()
 {
-    QVector3D unit;
+    vector3_s unit;
 
     if(m_direction[Direction_Forward])
-        unit.setZ(-m_movesens);
+        VECTOR3_Z(unit) = -m_movesens;
     else if(m_direction[Direction_Backward])
-        unit.setZ(m_movesens);
+        VECTOR3_Z(unit) = m_movesens;
 
     if(m_direction[Direction_Left])
-        unit.setX(-m_movesens);
+        VECTOR3_X(unit) = -m_movesens;
     else if(m_direction[Direction_Right])
-        unit.setX(m_movesens);
+        VECTOR3_X(unit) = m_movesens;
 
     if(m_direction[Direction_Down])
-        unit.setY(-m_movesens);
+        VECTOR3_Y(unit) = -m_movesens;
     else if(m_direction[Direction_Up])
-        unit.setY(m_movesens);
+        VECTOR3_Y(unit) = m_movesens;
 
-    m_viewpos += unit;
+    m_viewpos = vector3_add(&m_viewpos, &unit);
     //m_lightpos += unit;
     //qDebug()<<m_lightpos;
     updateGL();
@@ -647,6 +645,13 @@ bool karin_GLSplash::keyev(QKeyEvent *event, bool pressed)
             if(pressed)
             {
                 render_type ^= 1;
+                updateGL();
+            }
+            break;
+        case Qt::Key_L:
+            if(pressed)
+            {
+                m_dirlighting ^= 1;
                 updateGL();
             }
             break;
@@ -698,9 +703,9 @@ void karin_GLSplash::idle()
         }
     }
 
-    m_cubeangle.setX(clampangle(m_cubeangle.x() + m_orientation[0] * m_cubersens));
-    m_cubeangle.setY(clampangle(m_cubeangle.y() + m_orientation[1] * m_cubersens));
-    m_cubeangle.setZ(clampangle(m_cubeangle.z() + m_orientation[2] * m_cubersens));
+    VECTOR3_X(m_cubeangle) = clampangle(VECTOR3_X(m_cubeangle) + m_orientation[0] * m_cubersens);
+    VECTOR3_Y(m_cubeangle) = clampangle(VECTOR3_Y(m_cubeangle) + m_orientation[1] * m_cubersens);
+    VECTOR3_Z(m_cubeangle) = clampangle(VECTOR3_Z(m_cubeangle) + m_orientation[2] * m_cubersens);
 
     updateGL();
 }

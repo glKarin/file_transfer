@@ -44,7 +44,14 @@ HEADERS  += mainwindow.h \
     karin_settingdialog.h \
     karin_glsplash.h \
     mesa_gl_math.h \
-    glut2.h
+    glut2.h \
+    math/qmath.h
+
+HEADERS += \
+math/vector3.h
+
+SOURCES += \
+math/vector3.c
 
 FORMS    += mainwindow.ui \
     karin_filewindow.ui \
