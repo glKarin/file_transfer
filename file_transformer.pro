@@ -14,7 +14,9 @@ _APP_DEV=\\\"karin\\\" \
 _APP_VER=\\\"0.0.1harmattan1\\\" \
 _APP_CODE=\\\"katyusha\\\" \
 _APP_RELEASE=20181224 \
-_APP_PKG=\\\"filetransfer\\\"
+_APP_PKG=\\\"filetransfer\\\" \
+_APP_EMAIL=\\\"beyondk2000@gmail.com\\\" \
+_APP_GITHUB=\\\"https://github.com/glKarin/file_transfer\\\"
 
 
 SOURCES += main.cpp\

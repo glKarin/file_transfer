@@ -1,5 +1,6 @@
 #include "karin_progressdialog.h"
 #include "ui_karin_progressdialog.h"
+#include "karin_std.h"
 
 #include <QAbstractButton>
 #include <QDebug>
@@ -11,6 +12,9 @@ karin_ProgressDialog::karin_ProgressDialog(QWidget *parent) :
     ui(new Ui::karin_ProgressDialog)
 {
     ui->setupUi(this);
+
+    //FIXED_UI(this, ui->verticalLayoutWidget)
+
     init();
     connect(btn(-1), SIGNAL(clicked()), this, SIGNAL(reqexit()));
     connect(btn(0), SIGNAL(clicked()), this, SIGNAL(reqnext()));

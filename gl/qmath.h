@@ -95,7 +95,7 @@ inline void printfgl()
     qDebug() << "Renderer: " << (const char *)glGetString(GL_RENDERER);
     qDebug() << "Vendor: " << (const char *)glGetString(GL_VENDOR);
     qDebug() << "Version: " << (const char *)glGetString(GL_VERSION);
-    qDebug() << "Shading Language Version: " << (const char *)glGetString(0x8B8C);
+    qDebug() << "Shading Language Version: " << (const char *)glGetString(0x8B8C); // without GLEW
     qDebug() << "Extension: " << (const char *)glGetString(GL_EXTENSIONS);
     qDebug() << "--------------------------------------------------------------------";
 }

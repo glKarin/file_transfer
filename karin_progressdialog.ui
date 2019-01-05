@@ -2,13 +2,22 @@
 <ui version="4.0">
  <class>karin_ProgressDialog</class>
  <widget class="QDialog" name="karin_ProgressDialog">
+  <property name="windowModality">
+   <enum>Qt::ApplicationModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>788</width>
-    <height>440</height>
+    <width>640</width>
+    <height>360</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
@@ -21,8 +30,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>791</width>
-     <height>441</height>
+     <width>640</width>
+     <height>360</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="main_layout">
@@ -38,14 +47,26 @@
     </item>
     <item>
      <widget class="QStackedWidget" name="stacked_layout">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <widget class="QWidget" name="work_page">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <widget class="QWidget" name="verticalLayoutWidget_2">
         <property name="geometry">
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>791</width>
-          <height>391</height>
+          <width>640</width>
+          <height>360</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="work_layout">
@@ -97,6 +118,12 @@
          </item>
          <item>
           <widget class="QProgressBar" name="work_progressbar">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="value">
             <number>100</number>
            </property>

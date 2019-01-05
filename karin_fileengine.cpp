@@ -52,6 +52,7 @@ int karin_FileEngine::scan()
     sets(karin_FileEngine::FileEngine_Scanning);
     proc.start_unix_timestamp = QDateTime::currentMSecsSinceEpoch();
     proc.status = PROCESS_STATUS_RUNNING;
+    proc.thread = (FileThreadList_t *)(&m_scanners);
     Q_FOREACH(karin_FileScanner *s, m_scanners)
         s->start();
     m_process.insert(FileEngine_S, proc);
@@ -199,7 +200,41 @@ QString karin_FileEngine::statestr() const
 
 void karin_FileEngine::cancel()
 {
+    int p;
 
+    p = -1;
+    switch(m_state)
+    {
+    case FileEngine_Scanning:
+        p = static_cast<FileEngine_Process_e>(karin_FileEngine::FileEngine_S);
+        break;
+    case FileEngine_Mkdir:
+        p = static_cast<FileEngine_Process_e>(karin_FileEngine::FileEngine_M);
+        break;
+    case FileEngine_Trans:
+        p = static_cast<FileEngine_Process_e>(karin_FileEngine::FileEngine_T);
+        break;
+    case FileEngine_Checking:
+        p = static_cast<FileEngine_Process_e>(karin_FileEngine::FileEngine_C);
+        break;
+    case FileEngine_Transed:
+    case FileEngine_Done:
+    case FileEngine_Scanned:
+    case FileEngine_Ready:
+    case FileEngine_Prepare:
+    default:
+        break;
+    }
+
+    if(p != -1)
+    {
+        struct file_porcess_s &proc = m_process[p];
+        for(FileThreadList_t::iterator itor = proc.thread->begin();
+            itor != proc.thread->end(); ++itor)
+        {
+            itor.value()->pause();
+        }
+    }
 }
 
 void karin_FileEngine::pause()

@@ -27,6 +27,13 @@
 
 #define QRC_FILE "karin.qrc"
 
+#define FIXED_UI(parent, ui) \
+{ \
+    QVBoxLayout *_Main_Layout = new QVBoxLayout(parent); \
+    _Main_Layout->addWidget(ui); \
+    parent->setLayout(_Main_Layout); \
+}
+
 typedef unsigned long mask_t;
 typedef unsigned enum_t;
 typedef float clampf_t;
@@ -40,6 +47,7 @@ QString formatuts(qint64 d);
 int randr(int min, int max);
 QByteArray filemd5(const QString &file);
 int fcmp(const QString &f, const QString &s);
+
 
 
 #endif // KARIN_STD_H

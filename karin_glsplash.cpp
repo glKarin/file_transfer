@@ -7,6 +7,7 @@
 #include <QMouseEvent>
 #include <QTimer>
 #include <math.h>
+#include <time.h>
 
 #ifdef GL_ARB_depth_clamp
 #define SHADOW_VOLUME_FAR_W 0
@@ -36,6 +37,7 @@ karin_GLSplash::karin_GLSplash(QWidget *parent) :
     m_turnsens(1),
     m_timer(0)
 {
+    qsrand(time(0));
     vector3_s viewpos = Vector3D(0.395481, 2.8357, 6.89706);
     vector3_s viewangle = Vector3D(30, 344, 0.0);
 

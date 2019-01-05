@@ -9,16 +9,14 @@
 #include <QtCore>
 #include <QtGui>
 #include <math.h>
-#include <time.h>
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    //MainWindow w;
-    karin_GLSplash w;
+    MainWindow w;
+    //karin_GLSplash w;
     QSplashScreen *splash;
 
-    qsrand(time(0));
     Q_INIT_RESOURCE(karin);
     qRegisterMetaType<ftid_t>("ftid_t");
     app.setApplicationName(_APP_PKG);

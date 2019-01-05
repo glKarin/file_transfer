@@ -45,10 +45,11 @@ QString karin_UT::getabout() const
 {
     QString s;
     s += _APP_NAME"<br/>";
-    s += QObject::tr("Version") + ": " + _APP_VER"<br/>";
-    s += QObject::tr("Dev") + ": " + _APP_DEV"<br/>";
+    s += QObject::tr("Version") + ": " _APP_VER "<br/>";
+    s += QObject::tr("Dev") + ": <a href='mailto:" + _APP_EMAIL + "'>" _APP_DEV "</a><br/>";
     s += QObject::tr("Release") + ": " + QString::number(_APP_RELEASE) + "<br/>";
-    s += QObject::tr("Code") + ": " + _APP_CODE"<br/>";
+    s += QObject::tr("Code") + ": " _APP_CODE"<br/>";
+    s += QObject::tr("Source") + ": <a href='" _APP_GITHUB "'>" + _APP_GITHUB "</a><br/>";
     return s;
 }
 

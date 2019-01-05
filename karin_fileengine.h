@@ -25,11 +25,12 @@ struct file_info_s
     {}
 };
 
-typedef QHash<ftid_t, karin_FileScanner *> FileScannerList_t;
 typedef QHash<ftid_t, struct file_info_s> FileInfoList_t;
+typedef QHash<ftid_t, karin_FileThread *> FileThreadList_t;
+typedef QHash<ftid_t, karin_FileScanner *> FileScannerList_t;
 typedef QHash<ftid_t, karin_FileTransfer *> FileTransferList_t;
 typedef QHash<ftid_t, karin_FileDirMaker *> FileDirMkerList_t;
-typedef QHash<ftid_t, karin_FileChecker> FileCheckList_t;
+typedef QHash<ftid_t, karin_FileChecker *> FileCheckList_t;
 typedef QHash<int, struct file_porcess_s> ProcessList_t;
 typedef QHash<QString, QStringList> FileList_t;
 
@@ -40,13 +41,14 @@ typedef QHash<QString, QStringList> FileList_t;
 #define PROCESS_STATUS_RUNNING 2
 struct file_porcess_s
 {
+    FileThreadList_t *thread;
     FileInfoList_t infos;
     qint64 start_unix_timestamp; // 起始时间戳
     qint64 cur_unix_timestamp; // 当前时间戳
     qint64 end_unix_timestamp; // 结束时间戳
     int status; // 结束状态 0 - 正常
     file_porcess_s()
-        : start_unix_timestamp(0), cur_unix_timestamp(0), end_unix_timestamp(0), status(PROCESS_STATUS_READY)
+        : thread(0), start_unix_timestamp(0), cur_unix_timestamp(0), end_unix_timestamp(0), status(PROCESS_STATUS_READY)
     {}
 };
 

@@ -12,7 +12,8 @@
 karin_FileThread::karin_FileThread(ftid_t id, QObject *parent)
     : QThread(parent),
       m_id(id),
-      m_state(karin_FileThread::FileThread_None)
+      m_state(karin_FileThread::FileThread_None),
+      m_pause(false)
 {
     connect(this, SIGNAL(finished()), this, SLOT(finished_slot()));
     connect(this, SIGNAL(terminated()), this, SLOT(terminated_slot()));
@@ -21,6 +22,12 @@ karin_FileThread::karin_FileThread(ftid_t id, QObject *parent)
 karin_FileThread::~karin_FileThread()
 {
 
+}
+
+void karin_FileThread::pause()
+{
+    if(isRunning())
+        m_pause = true;
 }
 
 void karin_FileThread::clear()
@@ -118,6 +125,11 @@ QString karin_FileScanner::log()
 
 }
 
+void karin_FileScanner::pause()
+{
+    karin_FileThread::pause();
+}
+
 void karin_FileScanner::handle()
 {
     reset();
@@ -127,6 +139,9 @@ void karin_FileScanner::handle()
 int karin_FileScanner::getallfiles_r(const QString &path, QStringList *r, QStringList *r_dir)
 {
     int c;
+
+    if(m_pause)
+        return 0;
 
     if(!r)
         return 0;

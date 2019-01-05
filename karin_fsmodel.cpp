@@ -38,8 +38,10 @@ void karin_FSModel::init()
             itor != list.end();
             ++itor)
     {
+#ifndef Q_OS_WIN
         if(m_path == "/" && itor->fileName() == "..")
             continue;
+#endif
         file_info_s info;
         info.name = itor->isDir() ? itor->fileName() + "/" : itor->fileName();
         info.path = itor->absoluteFilePath();
@@ -55,10 +57,10 @@ void karin_FSModel::init()
 
 void karin_FSModel::setPath(const QString &path)
 {
-    //QString cleanpath = QDir::cleanPath(path);
-    if(m_path != path)
+    QString cleanpath = QDir::cleanPath(path);
+    if(m_path != cleanpath)
     {
-        QFileInfo info(path);
+        QFileInfo info(cleanpath);
         while(!info.isDir())
         {
             QString s = info.absolutePath();
@@ -106,32 +108,42 @@ void karin_FSModel::directoryChanged_slot(const QString &path)
 
 QVariant karin_FSModel::data(const QModelIndex &index, int role) const
 {
+    static const QString Fmt_StatusTip("%1 %2:%3 %4 (%5)");
+    static const QString Fmt_ToopTip("%1 %2:%3 %4");
     QVariant data;
+    file_info_s info;
     int i;
 
     if(!index.isValid())
-        return QVariant();
+        return data;
+
+    i = index.row();
+    if(i > m_filelist.size())
+        return data;
+
+    info = m_filelist.at(i);
 
     switch(role)
     {
     case Qt::DisplayRole:
-        i = index.row();
-        if(i < m_filelist.size())
-        {
-            file_info_s info = m_filelist.at(i);
-            data.setValue(info.name);
-        }
+        data.setValue(info.name);
         break;
     case Qt::SizeHintRole:
         data.setValue(QSize(FILE_GRID_WIDTH, FILE_GRID_HEIGHT));
         break;
     case Qt::DecorationRole:
-        i = index.row();
-        if(i < m_filelist.size())
-        {
-            file_info_s info = m_filelist.at(i);
-            data.setValue(info.type ? QIcon(":/resc/image/icon-m-common-directory.png") : QIcon(":/resc/image/icon-m-content-document.png"));
-        }
+        data.setValue(info.type ? QIcon(":/resc/image/icon-l-folder-empty.png") : QIcon(":/resc/image/icon-l-notes.png"));
+        break;
+    case Qt::ToolTipRole:
+        //data.setValue(info.path);
+        data.setValue(Fmt_ToopTip.arg(info.path).arg(info.owner).arg(info.group).arg(info.permission) + (info.type ? "" : QString(" (%1)").arg(info.size)));
+        break;
+    case Qt::StatusTipRole:
+        data.setValue(Fmt_StatusTip.arg(info.path).arg(info.owner).arg(info.group).arg(info.permission).arg(info.type ? tr("directory") : info.size));
+        break;
+
+    case Qt::TextAlignmentRole:
+        data.setValue(static_cast<int>(Qt::AlignLeft | Qt::AlignVCenter));
         break;
     default:
         break;

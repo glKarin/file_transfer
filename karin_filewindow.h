@@ -37,6 +37,7 @@ private:
     Ui::karin_FileWindow *ui;
     QString m_dir;
     karin_FileView *m_view;
+    int m_dirdrivercount;
 };
 
 #endif // KARIN_FILEWINDOW_H

@@ -33,6 +33,10 @@ public:
 
     virtual void run();
     virtual void start(QThread::Priority p = QThread::InheritPriority);
+    virtual void pause();
+    virtual void store(QIODevice *out) = 0;
+    virtual void load(QIODevice *in) = 0;
+    virtual QString log() = 0;
 
 Q_SIGNALS:
     void handlefinished(ftid_t m_id, bool suc);
@@ -48,14 +52,12 @@ protected:
     virtual void seteng(karin_FileEngine *e) { Q_UNUSED(e); }
     virtual void reset() {}
     virtual void clear();
-    virtual void store(QIODevice *out) = 0;
-    virtual void load(QIODevice *in) = 0;
-    virtual QString log() = 0;
 
 protected:
     ftid_t m_id;
     FileThread_State_e m_state;
     //karin_FileEngine *m_engine;
+    int m_pause;
 
     friend class karin_FileEngine;
 };
@@ -68,6 +70,10 @@ public:
     karin_FileScanner(ftid_t id, QObject *parent = 0);
     virtual ~karin_FileScanner();
     void setd(const QString &s);
+    virtual void pause();
+    virtual void store(QIODevice *out);
+    virtual void load(QIODevice *in);
+    virtual QString log();
 
 Q_SIGNALS:
     void scanning(ftid_t id, const QString &dir, quint32 fcount, quint32 dcount, quint64 fsize);
@@ -76,9 +82,6 @@ protected:
     virtual void handle();
     virtual void reset();
     virtual void clear();
-    virtual void store(QIODevice *out);
-    virtual void load(QIODevice *in);
-    virtual QString log();
 
 private:
     int getallfiles();
@@ -104,6 +107,10 @@ public:
     karin_FileDirMaker(ftid_t id, QObject *parent = 0);
     virtual ~karin_FileDirMaker();
     const QStringList & fails() const { return m_fails; }
+    virtual void pause();
+    virtual void store(QIODevice *out);
+    virtual void load(QIODevice *in);
+    virtual QString log();
 
 Q_SIGNALS:
     void mkingdir(ftid_t id, QString m_dir, bool suc, quint32 c);
@@ -113,9 +120,6 @@ protected:
     virtual void seteng(karin_FileEngine *e);
     virtual void reset();
     virtual void clear();
-    virtual void store(QIODevice *out);
-    virtual void load(QIODevice *in);
-    virtual QString log();
 
 private:
     int mkdir();
@@ -139,6 +143,10 @@ class karin_FileTransfer : public karin_FileThread
 public:
     karin_FileTransfer(ftid_t id, QObject *parent = 0);
     virtual ~karin_FileTransfer();
+    virtual void pause();
+    virtual void store(QIODevice *out);
+    virtual void load(QIODevice *in);
+    virtual QString log();
 
 Q_SIGNALS:
     void transfering(ftid_t id, QString file, bool suc, quint32 c, quint64 size);
@@ -147,9 +155,6 @@ protected:
     virtual void handle();
     virtual void reset();
     virtual void clear();
-    virtual void store(QIODevice *out);
-    virtual void load(QIODevice *in);
-    virtual QString log();
     void seteng2(karin_FileEngine *e, const QString &srcdir, const int start, int count);
 
 private:
@@ -177,6 +182,10 @@ class karin_FileChecker : public karin_FileThread
 public:
     karin_FileChecker(ftid_t id, QObject *parent = 0);
     virtual ~karin_FileChecker();
+    virtual void pause();
+    virtual void store(QIODevice *out);
+    virtual void load(QIODevice *in);
+    virtual QString log();
 
 Q_SIGNALS:
     void checking(ftid_t id, QString file, bool suc, quint32 c, quint32 f);
@@ -185,9 +194,6 @@ protected:
     virtual void handle();
     virtual void reset();
     virtual void clear();
-    virtual void store(QIODevice *out);
-    virtual void load(QIODevice *in);
-    virtual QString log();
     void seteng2(karin_FileEngine *e, const QString &srcdir, const int start, int count);
 
 private:
