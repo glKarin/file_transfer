@@ -25,12 +25,12 @@ void vector3_addv(vector3_s *r, const vector3_s *a, const vector3_s *b);
 void vector3_subtractv(vector3_s *r, const vector3_s *a, const vector3_s *b);
 void vector3_multiplyv(vector3_s *r, const vector3_s *a, const vector3_s *b);
 void vector3_dividev(vector3_s *r, const vector3_s *a, const vector3_s *b);
-void vector3_corssv(vector3_s *r, const vector3_s *a, const vector3_s *b);
+void vector3_crossv(vector3_s *r, const vector3_s *a, const vector3_s *b);
 void vector3_directionv(vector3_s *r, const vector3_s *a, const vector3_s *b);
 
 vector3_s vector3_normalize(const vector3_s *vec);
 float vector3_dot(const vector3_s *a, const vector3_s *b);
-vector3_s vector3_corss(const vector3_s *a, const vector3_s *b);
+vector3_s vector3_cross(const vector3_s *a, const vector3_s *b);
 float vector3_length(const vector3_s *a);
 vector3_s vector3_add(const vector3_s *a, const vector3_s *b);
 vector3_s vector3_subtract(const vector3_s *a, const vector3_s *b);

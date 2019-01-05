@@ -2,9 +2,11 @@
 #define QMATH_H
 
 #include <QVector3D>
+#include <QDebug>
 #include <GL/gl.h>
 
 #include "vector3.h"
+#include "camera.h"
 
 #define VEC3_X(x) ((x)[0])
 #define VEC3_Y(x) ((x)[1])
@@ -73,6 +75,30 @@ inline vector3_s vector3_s_to_QVector3D(const QVector3D &v)
     return r;
 }
 
+inline void printfv3(const vector3_s &v)
+{
+    static const QString Fmt("[%1, %2, %3]");
+    qDebug() << Fmt.arg(VECTOR3_X(v)).arg(VECTOR3_Y(v)).arg(VECTOR3_Z(v));
+}
+
+inline void printfcam(const camera_s &cam)
+{
+    static const QString Fmt("Pos->[%1, %2, %3], Dir->[%4, %5, %6], Rot->[%7, %8, %9]");
+    qDebug() << Fmt.arg(VECTOR3_X(cam.position)).arg(VECTOR3_Y(cam.position)).arg(VECTOR3_Z(cam.position))
+                .arg(VECTOR3_X(cam.direction)).arg(VECTOR3_Y(cam.direction)).arg(VECTOR3_Z(cam.direction))
+                .arg(VECTOR3_X(cam.rotation)).arg(VECTOR3_Y(cam.rotation)).arg(VECTOR3_Z(cam.rotation));
+}
+
+inline void printfgl()
+{
+    qDebug() << "------------------------------ OpenGL ------------------------------";
+    qDebug() << "Renderer: " << (const char *)glGetString(GL_RENDERER);
+    qDebug() << "Vendor: " << (const char *)glGetString(GL_VENDOR);
+    qDebug() << "Version: " << (const char *)glGetString(GL_VERSION);
+    qDebug() << "Shading Language Version: " << (const char *)glGetString(0x8B8C);
+    qDebug() << "Extension: " << (const char *)glGetString(GL_EXTENSIONS);
+    qDebug() << "--------------------------------------------------------------------";
+}
 
 
 // line_s

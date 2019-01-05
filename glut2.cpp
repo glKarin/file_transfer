@@ -58,7 +58,7 @@ static const GLfloat CubePlane4Normal[] =
     0.0, -1.0, 0.0
 };
 
-#define FULL_COLOR_FACTOR 0.4
+#define FULL_COLOR_FACTOR 0.2
 const GLfloat CubePlane4Color[] = {
         // Õý
         FULL_COLOR_FACTOR, 0.0, 0.0, 1.0,
@@ -281,26 +281,6 @@ void karinPlane_MinMax(const GLfloat v1[3], const GLfloat v2[3], material_s *r)
     }
 }
 
-float clampangle(float angle)
-{
-    int i = (int)angle;
-    float f = angle - i;
-    float r = 0.0;
-    if(angle > 360)
-    {
-        r = i % 360 + f;
-    }
-    else if(angle < 0)
-    {
-        r = 360 - abs(i % 360 + f);
-    }
-    else
-        r = angle;
-    if(r == 360.0)
-        r = 0.0;
-    return r;
-}
-
 int tridir(const QVector3D &a, const QVector3D &b, const QVector3D &c)
 {
     float m00 = a.x();
@@ -323,88 +303,6 @@ int tridir(const QVector3D &a, const QVector3D &b, const QVector3D &c)
     return f > 0 ? 1 : f < 0 ? -1 : 0;
 }
 
-void freemesh(mesh_s *mesh)
-{
-    int i;
-    if(!mesh)
-        return;
-    for(i = 0; i < mesh->count; i++)
-        freemat(mesh->materials + i);
-    free(mesh->materials);
-    mesh->count = 0;
-}
-
-void freemat(material_s *mat)
-{
-    if(!mat)
-        return;
-    free(mat->points);
-    if(glIsTexture(mat->texture))
-        glDeleteTextures(1, &mat->texture);
-    mat->texture = 0;
-    mat->count = 0;
-}
-
-void newmesh(mesh_s *mesh, int count)
-{
-    if(!mesh || count <= 0)
-        return;
-    mesh->count = count;
-    mesh->materials = (material_s *)calloc(mesh->count, sizeof(material_s));
-}
-
-void newmat(material_s *mat, int count)
-{
-    if(!mat || count <= 0)
-        return;
-    mat->count = count;
-    mat->points = (point_s *)calloc(mat->count, sizeof(point_s));
-    mat->texture = 0;
-    mat->color[0] = mat->color[1] = mat->color[2] = mat->color[3] = 1.0;
-    mat->use_color = true;
-}
-
-void rendermesh(const mesh_s *mesh)
-{
-    int i;
-    if(!mesh)
-        return;
-    for(i = 0; i < mesh->count; i++)
-    {
-        rendermat(mesh->materials + i);
-    }
-}
-
-void rendermat(const material_s *mat)
-{
-    bool use_tex;
-    if(!mat)
-        return;
-
-    use_tex = glIsTexture(mat->texture) && glIsEnabled(GL_TEXTURE_2D);
-
-    if(use_tex)
-    {
-        glBindTexture(GL_TEXTURE_2D, mat->texture);
-    }
-    if(!mat->use_color)
-    {
-        glColorPointer(4, GL_FLOAT, sizeof(point_s), &(mat->points[0].color[0]));
-    }
-    else
-        glColor4fv(mat->color);
-
-    glNormalPointer(GL_FLOAT, sizeof(point_s), &(mat->points[0].normal[0]));
-    glTexCoordPointer(2, GL_FLOAT, sizeof(point_s), &(mat->points[0].texcoord[0]));
-    glVertexPointer(VERTEX_ELEMENT_COUNT, GL_FLOAT, sizeof(point_s), &(mat->points[0].vertex[0]));
-
-    glDrawArrays(GL_TRIANGLES, 0, mat->count);
-
-    if(use_tex)
-    {
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-}
 
 void boxcenter(GLfloat r[3], const material_s *mat)
 {

@@ -42,10 +42,10 @@ float vector3_dot(const vector3_s *a, const vector3_s *b)
 	return VECTOR3V_X(a) * VECTOR3V_X(b) + VECTOR3V_Y(a) * VECTOR3V_Y(b) + VECTOR3V_Z(a) * VECTOR3V_Z(b);
 }
 
-vector3_s vector3_corss(const vector3_s *a, const vector3_s *b)
+vector3_s vector3_cross(const vector3_s *a, const vector3_s *b)
 {
 	vector3_s r = Identity_Vector3;
-	vector3_corssv(&r, a, b);
+    vector3_crossv(&r, a, b);
 	return r;
 }
 
@@ -191,7 +191,7 @@ void vector3_dividev(vector3_s *r, const vector3_s *a, const vector3_s *b)
 	VECTOR3V_Z(r) = VECTOR3V_Z(a) / VECTOR3V_Z(b);
 }
 
-void vector3_corssv(vector3_s *r, const vector3_s *a, const vector3_s *b)
+void vector3_crossv(vector3_s *r, const vector3_s *a, const vector3_s *b)
 {
 	IF_NULL_RETURN3(a, b, r)
 	

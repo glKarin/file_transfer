@@ -3,7 +3,7 @@
 
 #include "glut2.h"
 #include "mesa_gl_math.h"
-#include "math/qmath.h"
+#include "gl/qmath.h"
 
 #include <QGLWidget>
 
@@ -33,14 +33,15 @@ protected:
 private:
     void init();
     void deinit();
-    void rendershadow();
+    void rendershadow(const mesh_s *cube, const vector3_s *lpos, bool firstrender = true) const;
+    void rendershadowscene() const;
     void starttimer();
     bool keyev(QKeyEvent *event, bool pressed);
     void drawscene(const mesh_s *cube, bool plane = true) const;
     void transform();
     void setcamera() const;
-    vector3_s lightingdir(const GLfloat v[3], const vector3_s &lightpos, bool dirlight = false) const;
-    void shadowvol(mesh_s *r, const vector3_s &lightpos, const material_s *mat) const;
+    vector3_s lightingdir(const GLfloat v[3], const vector3_s *lightpos, bool dirlight = false) const;
+    void shadowvol(mesh_s *r, const vector3_s *lightpos, const material_s *mat) const;
     void caletrans(material_s *r, const material_s *src, const GLmatrix *mat) const;
 
 private Q_SLOTS:
@@ -49,11 +50,9 @@ private Q_SLOTS:
 private:
     mesh_s m_mesh;
 
-    vector3_s m_viewpos;
-    vector3_s m_scale;
-    vector3_s m_viewangle;
+    camera_s m_cam;
     vector3_s m_cubeangle;
-    vector3_s m_lightpos;
+    QList<vector3_s> m_lightpos;
     bool m_dirlighting;
 
     QPoint m_lastpos;
