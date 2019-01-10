@@ -1,8 +1,8 @@
 #include "karin_glsplash.h"
 #include "karin_std.h"
+#include "gl/gl_std.h"
+#include "ada/obj.h.c"
 
-#include <GL/glu.h>
-#include <GL/glext.h>
 #include <QDebug>
 #include <QMouseEvent>
 #include <QTimer>
@@ -17,15 +17,22 @@
 #define SHADOW_VOLUME_LENGTH 100
 #endif
 
+#define FRUSTUM_Z_NEAR 0.01
+#define FRUSTUM_Z_FAR 1000
+
 #define arrcpy3(n, o) {\
     n[0] = o[0]; \
     n[1] = o[1]; \
     n[2] = o[2]; \
-}
+    }
 #define M_CUBE_ROTATION_SENS 0.2
 
 static unsigned render_type = 1; // for testing mask
 static const int Mesh_Count = 3;
+
+#if 0
+static mesh_s ada;
+#endif
 
 karin_GLSplash::karin_GLSplash(QWidget *parent) :
     QGLWidget(parent),
@@ -37,6 +44,13 @@ karin_GLSplash::karin_GLSplash(QWidget *parent) :
     m_turnsens(1),
     m_timer(0)
 {
+#if defined(_GLSL)
+    QGLFormat format;
+    format.setVersion(3, 3);
+    format.setProfile(QGLFormat::CoreProfile);
+    setFormat(format);
+#endif
+
     qsrand(time(0));
     vector3_s viewpos = Vector3D(0.395481, 2.8357, 6.89706);
     vector3_s viewangle = Vector3D(30, 344, 0.0);
@@ -50,9 +64,9 @@ karin_GLSplash::karin_GLSplash(QWidget *parent) :
     m_orientation[0] = m_orientation[1] = m_orientation[2] = randr(10, 18);
     initcam(&m_cam, &viewpos, &viewangle);
     m_lightpos << Vector3D(0.0, 2.0, 0.0)
-        << Vector3D(-6.0, 6.0, -4.0)
-        << Vector3D(-4.0, 4.0, 4.0)
-        << Vector3D(2.0, 1.8, 0.5);
+               << Vector3D(-6.0, 6.0, -4.0)
+               << Vector3D(-4.0, 4.0, 4.0)
+               << Vector3D(2.0, 1.8, 0.5);
 
     if(!m_timer)
     {
@@ -98,49 +112,77 @@ void karin_GLSplash::init()
     karinCube_MinMax(min3, max3, m_mesh.materials + 3);
     m_mesh.materials[3].use_color = false;
     m_mesh.materials[3].rotation[1] = 59;
+
+
+#if defined(_GLSL)
+    GL_NewProgram(&m_defaultprog, "./glsl/default.vert", "./glsl/default.frag");
+#endif
+#if 0
+    ada_parse(&ada, "./ada/AdaORCObj.obj");
+#endif
+    for(int i = 0; i < TotalMatrix; i++)
+    {
+        Mesa_AllocGLMatrix(m_matrix + i);
+        Mesa_glLoadIdentity(m_matrix + i);
+    }
 }
 
 void karin_GLSplash::deinit()
 {
     freemesh(&m_mesh);
+#if defined(_GLSL)
+    GL_DeleteProgram(&m_defaultprog);
+#endif
 }
 
 void karin_GLSplash::initializeGL()
 {
+    QGLWidget::makeCurrent();
+#if defined(_GLSL)
+    getgl2func();
+#endif
+    printfgl();
+
+    init();
+
     glClearColor(0, 0, 0, 1);
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
     glCullFace(GL_BACK);
     glEnable(GL_CULL_FACE);
-    glPointSize(10);
 
+#if !defined(_GLSL)
     glEnable(GL_POINT_SMOOTH);
     glEnable(GL_LINE_SMOOTH);
+#endif
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     //glEnable(GL_BLEND);
     glStencilMask(~0);
-
-    init();
-
-    printfgl();
 }
 
 void karin_GLSplash::paintGL()
 {
-	static const QString Fmt("(%1, %2, %3) [%4, %5]");
+    static const QString Fmt("(%1, %2, %3) [%4, %5]");
+
+    GLmatrix mat;
+    Mesa_AllocGLMatrix(&mat);
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glPushMatrix();
+    render3d(45, size().width(), size().height(), FRUSTUM_Z_NEAR, FRUSTUM_Z_FAR);
     {
-        glLoadIdentity();
+#if defined(_GLSL)
+        GL_UseProgram(&m_defaultprog);
+        GL_EnableVertexAttribute(&m_defaultprog, a_Vertex);
+#else
+        glEnableClientState(GL_VERTEX_ARRAY);
+#endif
 
         setcamera();
 
         // render scene
         rendershadowscene();
-
 
 #if 0
         glColor4f(1.0, 0.0, 0.0, 1.0);
@@ -157,40 +199,85 @@ void karin_GLSplash::paintGL()
 #endif
 
         // lighting source
-        glColor4f(1.0, 1.0, 1.0, 1.0);
         GLfloat lp[] = { 0, 0, 0 };
+        GLfloat ps = 10;
+#if defined(_GLSL)
+        GL_Uniform(&m_defaultprog, u_Color, 1, White_Color);
+        GL_VertexAttribute(&m_defaultprog, a_Vertex, 3, 0, lp);
+        GL_Uniform(&m_defaultprog, u_PointSize, 1, &ps);
+#else
+        GLfloat cps;
+        glGetFloatv(GL_POINT_SIZE, &cps);
+        glPointSize(ps);
+        glColor4fv(White_Color);
         glVertexPointer(3, GL_FLOAT, 0, lp);
+#endif
         for(int i = 0; i < m_lightpos.size(); i++)
         {
-            glPushMatrix();
-            {
-                glTranslatef(VECTOR3_X(m_lightpos[i]), VECTOR3_Y(m_lightpos[i]), VECTOR3_Z(m_lightpos[i]));
-                glDrawArrays(GL_POINTS, 0, 1);
-            }
-            glPopMatrix();
+            Mesa_glLoadIdentity(&mat);
+            Mesa_glTranslate(&mat, VECTOR3_X(m_lightpos[i]), VECTOR3_Y(m_lightpos[i]), VECTOR3_Z(m_lightpos[i]));
+            setmvp(&mat);
+            glDrawArrays(GL_POINTS, 0, 1);
         }
+#if !defined(_GLSL)
+        glPointSize(cps);
+#endif
 
+        //printfcam(m_cam);
+
+#if defined(_GLSL)
+        GL_DisableVertexAttribute(&m_defaultprog, a_Vertex);
+#else
+        glDisableClientState(GL_VERTEX_ARRAY);
+#endif
     }
-    glPopMatrix();
-    glDisableClientState(GL_VERTEX_ARRAY);
-
-    //printfcam(m_cam);
 
     glFlush();
+
+    Mesa_FreeGLMatrix(&mat);
 }
 
 void karin_GLSplash::resizeGL(int w, int h)
 {
     glViewport(0, 0, w, h);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(45, (GLfloat)h / (GLfloat)h, 0.01, 10000);
-    glMatrixMode(GL_MODELVIEW);
 }
 
-void karin_GLSplash::setcamera() const
+void karin_GLSplash::setmvp(const GLmatrix *mat)
 {
-    camtrans_gl1(&m_cam);
+    Mesa_glLoadIdentity(m_matrix + ModelviewMatrix);
+    Mesa_glLoadMatrix(m_matrix + ModelviewMatrix, m_matrix[ViewMatrix].m);
+
+    if(mat)
+    {
+        Mesa_glMultMatrix(m_matrix + ModelviewMatrix, mat->m);
+    }
+
+    Mesa_glLoadMatrix(m_matrix + ModelviewProjectionMatrix, m_matrix[ProjectionMatrix].m);
+    Mesa_glMultMatrix(m_matrix + ModelviewProjectionMatrix, m_matrix[ModelviewMatrix].m);
+
+#if defined(_GLSL)
+    GL_Uniform(&m_defaultprog, u_ModelviewMatrix, 1, m_matrix[ModelviewMatrix].m);
+    GL_Uniform(&m_defaultprog, u_ProjectionMatrix, 1, m_matrix[ProjectionMatrix].m);
+    GL_Uniform(&m_defaultprog, u_ModelviewProjectionMatrix, 1, m_matrix[ModelviewProjectionMatrix].m);
+#else // not use OpenGL matrix stack, like glPushMatrix()/glPopMatrix for GLSL render
+    glMatrixMode(GL_MODELVIEW);
+    glLoadMatrixf(m_matrix[ModelviewMatrix].m);
+#endif
+}
+
+void karin_GLSplash::setcamera()
+{
+    Mesa_glLoadIdentity(m_matrix + ViewMatrix);
+    camtrans_gl(m_matrix + ViewMatrix, &m_cam);
+#if 0
+    glRotatef(VECTOR3_X(m_cam.rotation), 1, 0, 0);
+    glRotatef(VECTOR3_Y(m_cam.rotation), 0, 1, 0);
+    glTranslatef(
+                -VECTOR3_X(m_cam.position),
+                -VECTOR3_Y(m_cam.position),
+                -VECTOR3_Z(m_cam.position)
+                );
+#endif
 }
 
 vector3_s karin_GLSplash::lightingdir(const GLfloat v[3], const vector3_s *lightpos, bool dirlight) const
@@ -229,16 +316,15 @@ void karin_GLSplash::caletrans(material_s *r, const material_s *src, const GLmat
     r->use_color = src->use_color;
     r->texture = src->texture;
     memcpy(r->color, src->color, sizeof(GLfloat) * 4);
-    for(int i = 0; i < src->count; i++)
-    {
-        Mesa_glTransform4(r->points[i].vertex, src->points[i].vertex, mat);
-    }
 
     Mesa_AllocGLMatrix(&nor_mat);
     Mesa_NormalMatrix(&nor_mat, mat->m);
 
     for(int i = 0; i < src->count; i++)
     {
+        Mesa_glTransform4(r->points[i].vertex, src->points[i].vertex, mat);
+
+        // normal
         Mesa_glTransform(r->points[i].normal, src->points[i].normal, &nor_mat);
         vector3_s n = Vector3D(r->points[i].normal);
         vector3_normalize_self(&n);
@@ -312,15 +398,15 @@ void karin_GLSplash::shadowvol(mesh_s *r, const vector3_s *lightpos, const mater
             }
             // top cap triangle
             tops << Vector4D(pa[0].vertex)
-             << Vector4D(pa[1].vertex)
-              << Vector4D(pa[2].vertex);
+                 << Vector4D(pa[1].vertex)
+                 << Vector4D(pa[2].vertex);
         }
         else
         {
             // bottom cap triangle
             bottoms << Vector4D(pa[0].vertex)
-             << Vector4D(pa[1].vertex)
-              << Vector4D(pa[2].vertex);
+                    << Vector4D(pa[1].vertex)
+                    << Vector4D(pa[2].vertex);
         }
     }
 #if 0
@@ -358,12 +444,12 @@ void karin_GLSplash::shadowvol(mesh_s *r, const vector3_s *lightpos, const mater
 
         // triangle 1
         pa = m->points + k * 6;
-		vector3_s_to_GLfloatv(pa->vertex, l.a);
+        vector3_s_to_GLfloatv(pa->vertex, l.a);
         pa = m->points + k * 6 + 1;
         vector3_s_to_GLfloatv(pa->vertex, dir_a);
         pa->vertex[3] = SHADOW_VOLUME_FAR_W;
         pa = m->points + k * 6 + 2;
-		vector3_s_to_GLfloatv(pa->vertex, l.b);
+        vector3_s_to_GLfloatv(pa->vertex, l.b);
 
         // triangle 2
         pa = m->points + k * 6 + 3;
@@ -373,7 +459,7 @@ void karin_GLSplash::shadowvol(mesh_s *r, const vector3_s *lightpos, const mater
         vector3_s_to_GLfloatv(pa->vertex, dir_b);
         pa->vertex[3] = SHADOW_VOLUME_FAR_W;
         pa = m->points + k * 6 + 5;
-		vector3_s_to_GLfloatv(pa->vertex, l.b);
+        vector3_s_to_GLfloatv(pa->vertex, l.b);
 
         k++;
     }
@@ -388,11 +474,11 @@ void karin_GLSplash::shadowvol(mesh_s *r, const vector3_s *lightpos, const mater
         const vector3_s &sec = tops[k + 1];
         const vector3_s &third = tops[k + 2];
         pa = m->points + k;
-		vector3_s_to_GLfloatv(pa->vertex, first);
+        vector3_s_to_GLfloatv(pa->vertex, first);
         pa = m->points + k + 1;
-		vector3_s_to_GLfloatv(pa->vertex, sec);
+        vector3_s_to_GLfloatv(pa->vertex, sec);
         pa = m->points + k + 2;
-		vector3_s_to_GLfloatv(pa->vertex, third);
+        vector3_s_to_GLfloatv(pa->vertex, third);
     }
 
     // cale bottom cap of shadow volume
@@ -447,16 +533,16 @@ void karin_GLSplash::shadowvol(mesh_s *r, const vector3_s *lightpos, const mater
 #endif
 }
 
-void karin_GLSplash::rendershadow(const mesh_s *cube, const vector3_s *lpos, bool firstrender) const
+void karin_GLSplash::rendershadow(const mesh_s *cube, const vector3_s *lpos, int render_count)
 {
     mesh_s *vol;
 
     if(!cube || !lpos)
         return;
 
-    vol = (mesh_s *)calloc(Mesh_Count, sizeof(mesh_s));
+    vol = (mesh_s *)calloc(cube->count, sizeof(mesh_s));
 
-    for(int i = 0; i < Mesh_Count; i++)
+    for(int i = 0; i < cube->count; i++)
     {
         shadowvol(vol + i, lpos, cube->materials + i);
     }
@@ -464,7 +550,7 @@ void karin_GLSplash::rendershadow(const mesh_s *cube, const vector3_s *lpos, boo
     // render
     // 1: get depth buffer of scene
     glClear(GL_STENCIL_BUFFER_BIT);
-    if(firstrender)
+    if(render_count == 0)
     {
         glDisable(GL_BLEND);
         glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
@@ -483,9 +569,10 @@ void karin_GLSplash::rendershadow(const mesh_s *cube, const vector3_s *lpos, boo
     glStencilFunc(GL_ALWAYS, 0, ~0);
 
     // 2-1: cale front faces of shadow volume
+#if !defined(_GLSL)
     glStencilOp(GL_KEEP, GL_INCR, GL_KEEP);
     glCullFace(GL_FRONT);
-    for(int i = 0; i < Mesh_Count; i++)
+    for(int i = 0; i < cube->count; i++)
     {
         rendermesh(vol + i);
     }
@@ -493,51 +580,63 @@ void karin_GLSplash::rendershadow(const mesh_s *cube, const vector3_s *lpos, boo
     // 2-1: cale back faces of shadow volume
     glStencilOp(GL_KEEP, GL_DECR, GL_KEEP);
     glCullFace(GL_BACK);
-    for(int i = 0; i < Mesh_Count; i++)
+    for(int i = 0; i < cube->count; i++)
     {
         rendermesh(vol + i);
     }
+#else
+    glDisable(GL_CULL_FACE);
+    glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
+    glStencilOpSeparate(GL_BACK, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
+    for(int i = 0; i < cube->count; i++)
+    {
+        rendermesh(vol + i);
+    }
+    glEnable(GL_CULL_FACE);
+#endif
 
 #ifdef GL_ARB_depth_clamp
     glDisable(GL_DEPTH_CLAMP);
 #endif
 
-    // 3: final render scene again
-    glCullFace(GL_BACK);
-    glDepthFunc(GL_EQUAL); // GL_LESS will not pass depth-testing
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glDepthMask(GL_TRUE);
-    glStencilFunc(GL_EQUAL, 0, ~0);
-    glBlendFunc(GL_ONE, GL_ONE);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-    glEnable(GL_BLEND);
+    if(render_count != -1)
+    {
+        // 3: final render scene again
+        glCullFace(GL_BACK);
+        glDepthFunc(GL_EQUAL); // GL_LESS will not pass depth-testing
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glDepthMask(GL_TRUE);
+        glStencilFunc(GL_EQUAL, 0, ~0);
+        glBlendFunc(GL_ONE, GL_ONE);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+        glEnable(GL_BLEND);
 
-    drawscene(cube, true);
+        drawscene(cube, true);
 
-    // 4: reset OpenGL state
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_COLOR);
-    glDisable(GL_STENCIL_TEST);
-    glDisable(GL_BLEND);
-    glDepthFunc(GL_LESS);
+        // 4: reset OpenGL state
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_COLOR);
+        glDisable(GL_STENCIL_TEST);
+        glDisable(GL_BLEND);
+        glDepthFunc(GL_LESS);
+    }
 
 __Exit:
-    for(int i = 0; i < Mesh_Count; i++)
+    for(int i = 0; i < cube->count; i++)
     {
         freemesh(vol + i);
     }
     free(vol);
 }
 
-void karin_GLSplash::rendershadowscene() const
+void karin_GLSplash::rendershadowscene()
 {
     mesh_s cube;
     GLmatrix *mat;
 
     memset(&cube, 0, sizeof(mesh_s));
-    newmesh(&cube,Mesh_Count);
+    newmesh(&cube, Mesh_Count);
 
     mat = (GLmatrix *)calloc(Mesh_Count, sizeof(GLmatrix));
-
 
     for(int i = 0; i < Mesh_Count; i++)
     {
@@ -555,8 +654,17 @@ void karin_GLSplash::rendershadowscene() const
 
     for(int i = 0; i < m_lightpos.size(); i++)
     {
-        rendershadow(&cube, &m_lightpos[i], i == 0);
+        rendershadow(&cube, &m_lightpos[i], i);
     }
+
+
+
+#if 0
+    for(int i = 0; i < 1; i++)
+    {
+        rendershadow(&ada, &m_lightpos[i], i);
+    }
+#endif
 
 __Exit:
     for(int i = 0; i < Mesh_Count; i++)
@@ -567,22 +675,27 @@ __Exit:
     freemesh(&cube);
 }
 
-void karin_GLSplash::drawscene(const mesh_s *cube, bool plane) const
+void karin_GLSplash::drawscene(const mesh_s *cube, bool plane)
 {
+    setmvp(0);
     if(plane)
     {
-        glEnableClientState(GL_NORMAL_ARRAY);
         rendermat(m_mesh.materials);
-        glDisableClientState(GL_NORMAL_ARRAY);
     }
 
     if(cube)
     {
-        glEnableClientState(GL_NORMAL_ARRAY);
+#if defined(_GLSL)
+        GL_EnableVertexAttribute(GL_currprog, a_Color);
+#else
         glEnableClientState(GL_COLOR_ARRAY);
+#endif
         rendermesh(cube);
+#if defined(_GLSL)
+        GL_DisableVertexAttribute(GL_currprog, a_Color);
+#else
         glDisableClientState(GL_COLOR_ARRAY);
-        glDisableClientState(GL_NORMAL_ARRAY);
+#endif
     }
 }
 
@@ -599,8 +712,8 @@ void karin_GLSplash::mousePressEvent(QMouseEvent* event)
 
 void karin_GLSplash::mouseMoveEvent(QMouseEvent* event)
 {
-	vector3_s v;
-	
+    vector3_s v;
+
     if(m_pressed)
     {
         if(event->modifiers() & Qt::ControlModifier)
@@ -677,6 +790,7 @@ void karin_GLSplash::transform()
     //m_lightpos[0] += unit;
     //qDebug()<<m_lightpos[0];
     updateGL();
+    //QTimer::singleShot(50, this, SLOT(transform()));
 }
 
 bool karin_GLSplash::keyev(QKeyEvent *event, bool pressed)
@@ -750,8 +864,8 @@ bool karin_GLSplash::keyev(QKeyEvent *event, bool pressed)
         if(i != -1)
         {
             m_direction[i] = pressed;
-            r = true;
             transform();
+            r = true;
         }
         goto __Exit;
     }
@@ -792,4 +906,39 @@ void karin_GLSplash::idle()
     m_mesh.materials[1].rotation[2] = VECTOR3_Z(m_cubeangle);
 
     updateGL();
+}
+
+void karin_GLSplash::render2d(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top)
+{
+#if 1
+    Mesa_glLoadIdentity(m_matrix + ProjectionMatrix);
+    Mesa_gluOrtho2D(m_matrix + ProjectionMatrix, left, right, bottom, top);
+    glMatrixMode(GL_PROJECTION);
+    glLoadMatrixf(m_matrix[ProjectionMatrix].m);
+#else
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(left, right, bottom, top);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+#endif
+}
+
+void karin_GLSplash::render3d(GLfloat fovy, GLfloat w, GLfloat h, GLfloat near, GLfloat far)
+{
+    GLfloat th;
+
+    th = h != 0.0 ? h : 1;
+#if 1
+    Mesa_glLoadIdentity(m_matrix + ProjectionMatrix);
+    Mesa_gluPerspective(m_matrix + ProjectionMatrix, fovy, w / th, 0.01, 10000);
+    glMatrixMode(GL_PROJECTION);
+    glLoadMatrixf(m_matrix[ProjectionMatrix].m);
+#else
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(45, (GLfloat)w / (GLfloat)h, 0.01, 10000);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+#endif
 }

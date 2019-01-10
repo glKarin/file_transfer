@@ -21,7 +21,7 @@ public:
     QAbstractButton * btn(int i);
 
 Q_SIGNALS:
-    void reqexit();
+    void reqexit(int result);
     void reqpause();
     void reqnext();
 

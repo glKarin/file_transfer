@@ -4,6 +4,7 @@
 #include "glut2.h"
 #include "mesa_gl_math.h"
 #include "gl/qmath.h"
+#include "gl/gl2.h"
 
 #include <QGLWidget>
 
@@ -33,23 +34,30 @@ protected:
 private:
     void init();
     void deinit();
-    void rendershadow(const mesh_s *cube, const vector3_s *lpos, bool firstrender = true) const;
-    void rendershadowscene() const;
+    void rendershadow(const mesh_s *cube, const vector3_s *lpos, int render_count);
+    void rendershadowscene();
     void starttimer();
     bool keyev(QKeyEvent *event, bool pressed);
-    void drawscene(const mesh_s *cube, bool plane = true) const;
-    void transform();
-    void setcamera() const;
+    void drawscene(const mesh_s *cube, bool plane = true);
+    void setcamera();
+		void setmvp(const GLmatrix *mat);
     vector3_s lightingdir(const GLfloat v[3], const vector3_s *lightpos, bool dirlight = false) const;
     void shadowvol(mesh_s *r, const vector3_s *lightpos, const material_s *mat) const;
     void caletrans(material_s *r, const material_s *src, const GLmatrix *mat) const;
 
+    void render2d(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top);
+    void render3d(GLfloat fovy, GLfloat w, GLfloat h, GLfloat near, GLfloat far);
+
 private Q_SLOTS:
     void idle();
+    void transform();
 
 private:
+#if defined(_GLSL)
+		GL_program_s m_defaultprog;
+#endif
+        GLmatrix m_matrix[TotalMatrix];
     mesh_s m_mesh;
-
     camera_s m_cam;
     vector3_s m_cubeangle;
     QList<vector3_s> m_lightpos;

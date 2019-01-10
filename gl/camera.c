@@ -2,7 +2,10 @@
 
 #include <math.h>
 #include <stdlib.h>
-#include <GL/glu.h>
+
+#ifndef M_PI
+#define M_PI       3.14159265358979323846
+#endif
 
 void newcam(camera_s *cam)
 {
@@ -113,9 +116,10 @@ float clampangle(float angle)
     return r;
 }
 
-#define USING_GLU 0
-void camtrans_gl1(const camera_s *cam)
+#if 0
+void camtrans_gl(const camera_s *cam)
 {
+#define USING_GLU 0
     if(!cam)
         return;
 #if USING_GLU
@@ -141,3 +145,32 @@ void camtrans_gl1(const camera_s *cam)
                 );
 #endif
 }
+#else
+void camtrans_gl(GLmatrix *r, const camera_s *cam)
+{
+    if(!r || !cam)
+        return;
+#if 0
+    vector3_s forward = vector3_add(&cam->position, &cam->direction);
+    Mesa_gluLookAt(r, 
+                VECTOR3_X(cam->position),
+                VECTOR3_Y(cam->position),
+                VECTOR3_Z(cam->position),
+                VECTOR3_X(forward),
+                VECTOR3_Y(forward),
+                VECTOR3_Z(forward),
+                VECTOR3_X(cam->up),
+                VECTOR3_Y(cam->up),
+                VECTOR3_Z(cam->up)
+                );
+#else
+    Mesa_glRotate(r, VECTOR3_X(cam->rotation), 1, 0, 0);
+    Mesa_glRotate(r, VECTOR3_Y(cam->rotation), 0, 1, 0);
+    Mesa_glTranslate(r, 
+                -VECTOR3_X(cam->position),
+                -VECTOR3_Y(cam->position),
+                -VECTOR3_Z(cam->position)
+                );
+#endif
+}
+#endif

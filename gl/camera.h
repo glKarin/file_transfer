@@ -2,6 +2,7 @@
 #define _KARIN_CAMERA_H
 
 #include "vector3.h"
+#include "mesa_gl_math.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,7 +48,12 @@ void newcam(camera_s *cam);
 void initcam(camera_s *cam, const vector3_s *pos, const vector3_s *rot);
 void angtodir(vector3_s *r, const vector3_s *a);
 float clampangle(float angle);
-void camtrans_gl1(const camera_s *cam);
+
+#if 0
+void camtrans_gl(const camera_s *cam);
+#else
+void camtrans_gl(GLmatrix *r, const camera_s *cam);
+#endif
 
 #ifdef __cplusplus
 }

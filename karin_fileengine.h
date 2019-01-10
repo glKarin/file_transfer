@@ -7,6 +7,8 @@
 #include <QObject>
 #include <QHash>
 
+#define FILE_ENGINE_MAX_WORKING_THREAD 16
+
 class karin_FileScanner;
 class karin_FileTransfer;
 class karin_FileDirMaker;
@@ -85,6 +87,8 @@ public:
         FileEngine_SrcFilesIsEmpty,
         FileEngine_ReadDirFail,
         FileEngine_MakeDirFail,
+        FileEngine_TransferFail,
+        FileEngine_CheckFail,
     };
 
 public:
@@ -96,10 +100,12 @@ public:
     QString statestr() const;
 
 public Q_SLOTS:
-    int scan(const QStringList &dirs, const QString &dst);
+    int transfer(const QStringList &dirs, const QString &dst);
     int scan();
     int mkdirs();
     int trans();
+    int check();
+
     void cancel();
     void pause();
 
@@ -112,10 +118,12 @@ private Q_SLOTS:
     void scanningfinished_slot(ftid_t id, bool suc);
     void mkingdirfinished_slot(ftid_t id, bool suc);
     void transferfinished_slot(ftid_t id, bool suc);
+    void checkfinished_slot(ftid_t id, bool suc);
     void sets(FileEngine_State_e s);
     void scanning_slot(ftid_t id, const QString &dir, quint32 fcount, quint32 dcount, quint64 fsize);
     void mkingdir_slot(ftid_t id, const QString &dir, bool suc, quint32 count);
-    void transfer_slot(ftid_t id, QString file, bool suc, quint32 c, quint64 size);
+    void transfer_slot(ftid_t id, const QString &file, bool suc, quint32 c, quint64 size);
+    void check_slot(ftid_t id, const QString &file, bool suc, quint32 c, quint32 size);
 
 private:
     void deinit();

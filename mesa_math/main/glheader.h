@@ -50,11 +50,21 @@
 
 
 #define GL_GLEXT_PROTOTYPES
-#include <GL/gl.h>
+#ifdef _HARMATTAN
+    #include <GLES2/gl2.h>
+#else // harmattan
+#if defined(_OS_WIN32)
+    #if defined(_GLSL)
+        #include "GL/glew.h"
+    #elif defined(__MINGW32__) || defined(__CYGWIN__)
+        #include <GL/gl.h>
+    #else
+        #include "gl/gl_std.h"
+    #endif
+    typedef short GLhalf;
+#endif
+#endif
 
-typedef short GLhalf;
-
-#define CHAN_BITS 8
 
 
 
@@ -64,6 +74,7 @@ typedef short GLhalf;
 typedef int GLfixed;
 typedef int GLclampx;
 
+#define CHAN_BITS 8
 
 #ifndef GL_OES_EGL_image
 typedef void *GLeglImageOES;

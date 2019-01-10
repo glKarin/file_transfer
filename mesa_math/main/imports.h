@@ -45,10 +45,17 @@ extern "C" {
 #endif
 
 #define STD_OUTOUT_DEVICE stdout
+#ifdef _OS_WIN32
+#define _mesa_debug(dev, ...) fprintf(stdout, "[DEBUG]: "); fprintf(stdout, __VA_ARGS__ )
+#define _mesa_problem(dev, ...) fprintf(stdout, "[PROBLEM]: "); fprintf(stdout, __VA_ARGS__ )
+#define _mesa_warning(dev, ...) fprintf(stderr, "[WARNING]: "); fprintf(stderr, __VA_ARGS__ )
+#define _mesa_error(dev, glerr, ...) fprintf(stderr, "[ERROR] - %d: ", glerr); fprintf(stderr, __VA_ARGS__ )
+#else
 #define _mesa_debug(dev, args...) fprintf(stdout, "[DEBUG]: "); fprintf(stdout, args)
 #define _mesa_problem(dev, args...) fprintf(stdout, "[PROBLEM]: "); fprintf(stdout, args)
 #define _mesa_warning(dev, args...) fprintf(stderr, "[WARNING]: "); fprintf(stderr, args)
 #define _mesa_error(dev, glerr, args...) fprintf(stderr, "[ERROR] - %d: ", glerr); fprintf(stderr, args)
+#endif
 
 #if CHAN_BITS == 8
    typedef GLubyte GLchan;

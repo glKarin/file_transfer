@@ -16,7 +16,8 @@ karin_ProgressDialog::karin_ProgressDialog(QWidget *parent) :
     //FIXED_UI(this, ui->verticalLayoutWidget)
 
     init();
-    connect(btn(-1), SIGNAL(clicked()), this, SIGNAL(reqexit()));
+    connect(this, SIGNAL(finished(int)), this, SIGNAL(reqexit(int)));
+    connect(btn(-1), SIGNAL(clicked()), this, SIGNAL(reqpause()));
     connect(btn(0), SIGNAL(clicked()), this, SIGNAL(reqnext()));
 }
 

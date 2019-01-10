@@ -3,10 +3,9 @@
 
 #include "gl/mesh.h"
 #include "gl/camera.h"
+#include "gl/gl_std.h"
 
 #include <QVector3D>
-#include <GL/gl.h>
-
 
 void printm(const GLfloat m[16]);
 bool maketri(GLfloat r[9], const QVector3D &a, const QVector3D &b, const QVector3D &c);

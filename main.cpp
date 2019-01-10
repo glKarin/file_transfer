@@ -1,3 +1,4 @@
+#include "gl/gl_std.h"
 #include <QtGui/QApplication>
 #include <QMetaType>
 #include "mainwindow.h"
@@ -5,6 +6,7 @@
 #include "karin_ut.h"
 #include "karin_fileengine_p.h"
 #include "karin_glsplash.h"
+
 
 #include <QtCore>
 #include <QtGui>
@@ -16,6 +18,9 @@ int main(int argc, char *argv[])
     MainWindow w;
     //karin_GLSplash w;
     QSplashScreen *splash;
+
+    // for test
+    //karin_UT::Instance()->mktestfiles("C:/SS/tt", 1000000, 0);
 
     Q_INIT_RESOURCE(karin);
     qRegisterMetaType<ftid_t>("ftid_t");

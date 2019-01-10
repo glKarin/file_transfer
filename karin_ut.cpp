@@ -7,12 +7,15 @@
 #include <QDebug>
 
 karin_UT::karin_UT()
-    : m_setting(new QSettings)
+    : m_setting(new QSettings(LOCAL_SETTING_FILE, QSettings::IniFormat))
     , m_log(false)
     , m_loglvl(karin_UT::Log_All_Level)
 {
     enablelog(getsetting<bool>(SETTING_ENABLE_LOG));
     setloglvl(getsetting<int>(SETTING_LOG_LEVEL));
+
+    //m_setting->setDefaultFormat(QSettings::IniFormat);
+    //qDebug()<<m_setting->fileName();
 }
 
 karin_UT::~karin_UT()
@@ -36,7 +39,7 @@ QVariant karin_UT::Defsettings(const QString &key)
         Def_Setting.insert(SETTING_RIGHT_PATH, QDir::rootPath());
         Def_Setting.insert(SETTING_LOG_LEVEL, false);
         Def_Setting.insert(SETTING_ENABLE_LOG, karin_UT::Log_All_Level & (~karin_UT::Log_Debug_Level));
-        Def_Setting.insert(SETTING_MAX_WORKING_THREAD, 1);
+        Def_Setting.insert(SETTING_MAX_WORKING_THREAD, 8);
     }
     return Def_Setting.value(key);
 }
@@ -117,4 +120,48 @@ void karin_UT::enablelog(bool b)
     }
     else
         m_log = b;
+}
+
+_DEVELOPER_USING quint32 karin_UT::mktestfiles(const QString &path, quint32 count, int s)
+{
+#define TEST_FILE_MAX_SIZE 4096
+#define TEST_FILE_PREFIX "tt_%1.txt"
+    int i;
+    int size;
+    int c;
+    QDir dir(path);
+    const QString Prefix(TEST_FILE_PREFIX);
+
+    if(!dir.exists() || count == 0)
+        return 0;
+
+    i = 0;
+
+    QString start = QDateTime::currentDateTime().toString();
+    while(i < count)
+    {
+        c = 0;
+        QFile file(dir.absoluteFilePath(Prefix.arg(i)));
+        if(!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        {
+            //qWarning() << file.fileName() << " open fail!";
+        }
+
+        size = randr(qMax(s, TEST_FILE_MAX_SIZE / 2), qMax(s, TEST_FILE_MAX_SIZE * 2));
+        qDebug()<<i<<size<<file.fileName()<<"...";
+        file.write(QString("[%1] -> %2\r\n").arg(i).arg(size).toAscii());
+        while(c < size)
+        {
+            c += file.write(QString("%1\r\n").arg(qrand() % size).toAscii());
+        }
+
+        file.flush();
+
+        file.close();
+
+        i++;
+    }
+    qDebug() << start;
+    qDebug() << QDateTime::currentDateTime().toString();
+    return i;
 }

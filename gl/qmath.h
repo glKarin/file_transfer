@@ -3,7 +3,6 @@
 
 #include <QVector3D>
 #include <QDebug>
-#include <GL/gl.h>
 
 #include "vector3.h"
 #include "camera.h"
@@ -95,7 +94,9 @@ inline void printfgl()
     qDebug() << "Renderer: " << (const char *)glGetString(GL_RENDERER);
     qDebug() << "Vendor: " << (const char *)glGetString(GL_VENDOR);
     qDebug() << "Version: " << (const char *)glGetString(GL_VERSION);
-    qDebug() << "Shading Language Version: " << (const char *)glGetString(0x8B8C); // without GLEW
+#if defined(_GLSL)
+    qDebug() << "Shading Language Version: " << (const char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
+#endif
     qDebug() << "Extension: " << (const char *)glGetString(GL_EXTENSIONS);
     qDebug() << "--------------------------------------------------------------------";
 }

@@ -87,9 +87,10 @@ vector3_s vector3_divide(const vector3_s *a, const vector3_s *b)
 
 vector3_s vector3_scale(const vector3_s *a, float n)
 {
+    vector3_s r = Identity_Vector3;
+
 	IF_NULL_RETURNV(a, Identity_Vector3)
-	
-	vector3_s r = Identity_Vector3;
+
 	VECTOR3_X(r) = VECTOR3V_X(a) * n;
 	VECTOR3_Y(r) = VECTOR3V_Y(a) * n;
 	VECTOR3_Z(r) = VECTOR3V_Z(a) * n;
@@ -111,9 +112,9 @@ int vector3_equals(const vector3_s *a, const vector3_s *b)
 
 vector3_s vector3_invert(const vector3_s *a)
 {
+    vector3_s r = Identity_Vector3;
 	IF_NULL_RETURNV(a, Identity_Vector3)
-	
-	vector3_s r = Identity_Vector3;
+
 	VECTOR3_X(r) = -VECTOR3V_X(a);
 	VECTOR3_Y(r) = -VECTOR3V_Y(a);
 	VECTOR3_Z(r) = -VECTOR3V_Z(a);

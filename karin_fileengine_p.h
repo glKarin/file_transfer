@@ -8,6 +8,10 @@
 #define FE_IN private:
 #define FE_OUT private:
 
+#define FT_RESULT_NONE -1
+#define FT_RESULT_FINISHED 0
+#define FT_RESULT_TERMINATED 1
+
 typedef qint8 ftid_t;
 
 class karin_FileEngine;
@@ -37,10 +41,12 @@ public:
     virtual void store(QIODevice *out) = 0;
     virtual void load(QIODevice *in) = 0;
     virtual QString log() = 0;
+    QString name() const { return m_name; }
 
 Q_SIGNALS:
     void handlefinished(ftid_t m_id, bool suc);
     void stateChanged(FileThread_State_e s);
+    void ftfinished(int result);
 
 private Q_SLOTS:
     virtual void finished_slot();
@@ -52,12 +58,16 @@ protected:
     virtual void seteng(karin_FileEngine *e) { Q_UNUSED(e); }
     virtual void reset() {}
     virtual void clear();
+    void setname(const QString &n);
+    void setres(int res);
 
 protected:
     ftid_t m_id;
     FileThread_State_e m_state;
     //karin_FileEngine *m_engine;
     int m_pause;
+    int m_result;
+    QString m_name;
 
     friend class karin_FileEngine;
 };

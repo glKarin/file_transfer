@@ -132,7 +132,6 @@ __Exit:
 
 int fcp(const QString &dst, const QString &src)
 {
-    qDebug()<<dst <<"<<"<<src;
     QFileInfo dst_info(dst);
     if(dst_info.exists())
     {

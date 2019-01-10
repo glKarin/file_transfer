@@ -97,7 +97,7 @@ void MainWindow::reqtransform_slot(const QStringList &src, const QString &dst)
     m_file->prepare(src, dst);
     m_dialog->settitle(tr("Progress Dialog"));
     connect(m_file, SIGNAL(updating(int, const QString &)), this, SLOT(updating_slot(int, const QString &)));
-    connect(m_dialog, SIGNAL(reqexit()), this, SLOT(reqexit_slot()));
+    connect(m_dialog, SIGNAL(reqexit(int)), this, SLOT(reqexit_slot(int)));
     connect(m_dialog, SIGNAL(reqpause()), this, SLOT(reqpause_slot()));
     connect(m_dialog, SIGNAL(reqnext()), this, SLOT(reqnext_slot()));
     connect(m_file, SIGNAL(stateChanged(FileEngine_State_e)), this, SLOT(stateChanged_slot()));
@@ -126,13 +126,38 @@ void MainWindow::stateChanged_slot()
     m_dialog->setcurtitle(m_file->statestr());
     if(s == karin_FileEngine::FileEngine_Scanning)
     {
-        m_dialog->settoolvisible(false, true);
+        m_dialog->settoolvisible(false, false);
         m_dialog->settoolstr("", tr("Cancel"));
     }
     else if(s == karin_FileEngine::FileEngine_Scanned)
     {
         m_dialog->settoolvisible(true, true);
         m_dialog->settoolstr(tr("Copy"), tr("Cancel"));
+    }
+    else if(s == karin_FileEngine::FileEngine_Mkdir)
+    {
+        m_dialog->settoolvisible(false, false);
+        m_dialog->settoolstr("", tr("Cancel"));
+    }
+    else if(s == karin_FileEngine::FileEngine_Trans)
+    {
+        m_dialog->settoolvisible(false, false);
+        m_dialog->settoolstr("", tr("Cancel"));
+    }
+    else if(s == karin_FileEngine::FileEngine_Transed)
+    {
+        m_dialog->settoolvisible(true, true);
+        m_dialog->settoolstr(tr("Check"), tr("Done"));
+    }
+    else if(s == karin_FileEngine::FileEngine_Checking)
+    {
+        m_dialog->settoolvisible(false, false);
+        m_dialog->settoolstr("", tr("Cancel"));
+    }
+    else if(s == karin_FileEngine::FileEngine_Done)
+    {
+        m_dialog->settoolvisible(true, false);
+        m_dialog->settoolstr(tr("Cancel"), "");
     }
 }
 
@@ -150,15 +175,26 @@ void MainWindow::opensettingdialog()
     dialog->exec();
 }
 
-void MainWindow::reqexit_slot()
+void MainWindow::reqexit_slot(int result)
 {
+    //Q_UNUSED(result);
+
     m_file->cancel();
-    m_dialog->done(1);
+    m_file->deleteLater();
+    m_file = 0;
+    m_dialog = 0;
 }
 
 void MainWindow::reqpause_slot()
 {
-    m_file->pause();
+    karin_FileEngine::FileEngine_State_e s;
+
+    s = m_file->state();
+
+    if(s == karin_FileEngine::FileEngine_Transed)
+    {
+        m_dialog->done(0);
+    }
 }
 
 void MainWindow::reqnext_slot()
@@ -171,6 +207,10 @@ void MainWindow::reqnext_slot()
     {
         m_file->mkdirs();
     }
+    else if(s == karin_FileEngine::FileEngine_Transed)
+    {
+        m_file->check();
+    }
 }
 
 void MainWindow::gl()
@@ -179,6 +219,7 @@ void MainWindow::gl()
     karin_GLSplash *splash;
 
     dialog = new QDialog(this);
+    dialog->setWindowTitle("OpenGL Shadow Volume");
     dialog->setAttribute(Qt::WA_DeleteOnClose, true);
     splash = new karin_GLSplash(dialog);
     dialog->resize(splash->size());

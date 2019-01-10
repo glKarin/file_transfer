@@ -13,10 +13,13 @@ karin_FileThread::karin_FileThread(ftid_t id, QObject *parent)
     : QThread(parent),
       m_id(id),
       m_state(karin_FileThread::FileThread_None),
-      m_pause(false)
+      m_pause(false),
+      m_result(FT_RESULT_NONE)
 {
     connect(this, SIGNAL(finished()), this, SLOT(finished_slot()));
     connect(this, SIGNAL(terminated()), this, SLOT(terminated_slot()));
+
+    setname("_Thread");
 }
 
 karin_FileThread::~karin_FileThread()
@@ -24,10 +27,25 @@ karin_FileThread::~karin_FileThread()
 
 }
 
+void karin_FileThread::setres(int res)
+{
+    if(res != m_result && res >= 0)
+    {
+        m_result = res;
+        emit ftfinished(m_result);
+    }
+}
+
 void karin_FileThread::pause()
 {
     if(isRunning())
         m_pause = true;
+}
+
+void karin_FileThread::setname(const QString &n)
+{
+    m_name = n;
+    setObjectName(QString("%1_%2").arg(m_name).arg(m_id));
 }
 
 void karin_FileThread::clear()
@@ -45,10 +63,11 @@ void karin_FileThread::start(QThread::Priority p)
 
 void karin_FileThread::run()
 {
-    qDebug()<<currentThreadId();
+    qDebug() << "[Star]: " << objectName() << " -> " << currentThreadId();
     sets(karin_FileThread::FileThread_Doing);
     handle();
     sets(karin_FileThread::FileThread_Done);
+    qDebug() << "[End ]: " << objectName() << " -> " << currentThreadId();
 }
 
 void karin_FileThread::sets(FileThread_State_e s)
@@ -62,16 +81,18 @@ void karin_FileThread::sets(FileThread_State_e s)
 
 void karin_FileThread::finished_slot()
 {
+    setres(FT_RESULT_FINISHED);
     sets(karin_FileThread::FileThread_Done);
     emit handlefinished(m_id, true);
-    qDebug()<<"FFFFFFFFFFFFFFF";
+    qDebug() << "[Fini]: " << objectName();
 }
 
 void karin_FileThread::terminated_slot()
 {
+    setres(FT_RESULT_TERMINATED);
     sets(karin_FileThread::FileThread_Fail);
     emit handlefinished(m_id, false);
-    qDebug()<<"TTTTTTTTTTTTTT";
+    qDebug() << "[Term]: " << objectName();
 }
 
 
@@ -82,6 +103,7 @@ karin_FileScanner::karin_FileScanner(ftid_t id, QObject *parent)
       m_dir(0),
       m_size(0)
 {
+    setname("_Scanner");
 }
 
 karin_FileScanner::~karin_FileScanner()
@@ -122,7 +144,7 @@ void karin_FileScanner::load(QIODevice *in)
 
 QString karin_FileScanner::log()
 {
-
+    return "";
 }
 
 void karin_FileScanner::pause()
@@ -139,9 +161,6 @@ void karin_FileScanner::handle()
 int karin_FileScanner::getallfiles_r(const QString &path, QStringList *r, QStringList *r_dir)
 {
     int c;
-
-    if(m_pause)
-        return 0;
 
     if(!r)
         return 0;
@@ -212,6 +231,7 @@ karin_FileDirMaker::karin_FileDirMaker(ftid_t id, QObject *parent)
       m_dir(0),
       m_countc(0)
 {
+    setname("_DirMaker");
 }
 
 karin_FileDirMaker::~karin_FileDirMaker()
@@ -221,7 +241,6 @@ karin_FileDirMaker::~karin_FileDirMaker()
 
 void karin_FileDirMaker::reset()
 {
-    m_dirs.clear();
     m_fails.clear();
     m_countc = 0;
     karin_FileThread::reset();
@@ -244,7 +263,12 @@ void karin_FileDirMaker::load(QIODevice *in)
 
 QString karin_FileDirMaker::log()
 {
+    return "";
+}
 
+void karin_FileDirMaker::pause()
+{
+    karin_FileThread::pause();
 }
 
 void karin_FileDirMaker::handle()
@@ -255,7 +279,6 @@ void karin_FileDirMaker::handle()
 
 int karin_FileDirMaker::mkdir()
 {
-    qDebug()<<"mkdir2";
     int c;
 
     Q_FOREACH(const QString &s, m_dirs)
@@ -282,7 +305,7 @@ int karin_FileDirMaker::mkdir_p(const QString &s)
         goto __Exit;
     }
 
-    qDebug()<<m_dir->absoluteFilePath(s);
+    //qDebug()<<m_dir->absoluteFilePath(s);
     if(dir.exists())
     {
         if(dir.isDir()/* && dir.isReadable()*/)
@@ -330,6 +353,7 @@ karin_FileTransfer::karin_FileTransfer(ftid_t id, QObject *parent)
       m_countc(0),
       m_sizec(0)
 {
+    setname("_Transfer");
 }
 
 karin_FileTransfer::~karin_FileTransfer()
@@ -364,6 +388,12 @@ void karin_FileTransfer::load(QIODevice *in)
 QString karin_FileTransfer::log()
 {
 
+    return "";
+}
+
+void karin_FileTransfer::pause()
+{
+    karin_FileThread::pause();
 }
 
 void karin_FileTransfer::handle()
@@ -383,7 +413,7 @@ int karin_FileTransfer::trans()
         dst = m_dstdir->absoluteFilePath(file);
         src = m_srcdir->absoluteFilePath(file);
         r = fcp(dst, src);
-        qDebug()<<r;
+        //qDebug()<<dst << "<<" << src <<r;
         if(r >= 0)
         {
             m_countc++;
@@ -395,6 +425,7 @@ int karin_FileTransfer::trans()
         }
         emit transfering(m_id, dst, r >= 0, m_countc, m_sizec);
     }
+    return m_countc;
 }
 
 void karin_FileTransfer::seteng2(karin_FileEngine *e, const QString &srcdir, const int start, int count)
@@ -422,7 +453,7 @@ karin_FileChecker::karin_FileChecker(ftid_t id, QObject *parent)
     m_dstdir(0),
     m_countc(0)
 {
-
+    setname("_Checker");
 }
 
 karin_FileChecker::~karin_FileChecker()
@@ -457,6 +488,12 @@ void karin_FileChecker::load(QIODevice *in)
 QString karin_FileChecker::log()
 {
 
+    return "";
+}
+
+void karin_FileChecker::pause()
+{
+    karin_FileThread::pause();
 }
 
 void karin_FileChecker::handle()
@@ -478,7 +515,7 @@ int karin_FileChecker::check()
         dst = m_dstdir->absoluteFilePath(file);
         src = m_srcdir->absoluteFilePath(file);
         r = fcmp(dst, src);
-        qDebug()<<r;
+        //qDebug()<<r <<dst<<src;
         switch(r)
         {
         case FCMP_TYPE_DIFF:

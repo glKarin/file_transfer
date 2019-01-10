@@ -2,6 +2,7 @@
 #define KARIN_UT_H
 
 #include <QSettings>
+#include <QDebug>
 #include "karin_std.h"
 
 
@@ -14,6 +15,8 @@
 #define LOG_DIR "./.logs"
 #define LOG_FILE_PREFIX "log"
 #define LOG_FILE_EXT "txt"
+
+#define LOCAL_SETTING_FILE "./settings.ini"
 
 class karin_UT
 {
@@ -40,6 +43,8 @@ public:
     void setlogbase(Log_Level_e b);
     void wrlog(Log_Level_e e, const QString &content) const;
     QString logfile() const;
+
+    _DEVELOPER_USING quint32 mktestfiles(const QString &path, quint32 count, int s);
 
 private:
     QVariant Defsettings(const QString &key);

@@ -34,6 +34,8 @@
     parent->setLayout(_Main_Layout); \
 }
 
+#define _DEVELOPER_USING
+
 typedef unsigned long mask_t;
 typedef unsigned enum_t;
 typedef float clampf_t;

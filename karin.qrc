@@ -5,5 +5,7 @@
         <file>resc/image/icon-l-notes.png</file>
         <file>resc/image/icon-m-email-combined-mailbox.png</file>
         <file>resc/image/icon-m-content-url.png</file>
+        <file>glsl/default.vert</file>
+        <file>glsl/default.frag</file>
     </qresource>
 </RCC>

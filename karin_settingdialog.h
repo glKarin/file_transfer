@@ -14,6 +14,13 @@ class karin_SettingDialog : public QDialog
 public:
     explicit karin_SettingDialog(QWidget *parent = 0);
     ~karin_SettingDialog();
+
+private:
+    void init();
+
+private Q_SLOTS:
+    void thread_slot(int v) const;
+    void enablelog_slot(int v) const;
     
 private:
     Ui::karin_SettingDialog *ui;

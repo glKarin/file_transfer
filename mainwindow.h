@@ -32,7 +32,7 @@ private Q_SLOTS:
     void opensettingdialog();
     void write_SETTING_LEFT_PATH(const QString &);
     void write_SETTING_RIGHT_PATH(const QString &);
-    void reqexit_slot();
+    void reqexit_slot(int result);
     void reqpause_slot();
     void reqnext_slot();
     void gl();

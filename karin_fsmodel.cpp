@@ -203,7 +203,7 @@ QStringList karin_FSModel::mimeTypes() const
     return types;
 }
 
-QMimeData *karin_FSModel::mimeData(const QModelIndexList &indexes) const
+QMimeData * karin_FSModel::mimeData(const QModelIndexList &indexes) const
 {
     QMimeData *mimeData;
     QByteArray encodedData;
@@ -221,14 +221,13 @@ QMimeData *karin_FSModel::mimeData(const QModelIndexList &indexes) const
     }
 
     mimeData->setData("application/vnd.text.list", encodedData);
+    qDebug()<<"application/vnd.text.list" <<encodedData;
     return mimeData;
 }
 
 bool karin_FSModel::dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent)
 {
-    qApp->quit();
     qDebug()<<action<<row<<column<<Qt::IgnoreAction;
-    return 1;
     if (action == Qt::IgnoreAction)
         return true;
 

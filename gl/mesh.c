@@ -1,8 +1,20 @@
 #include "mesh.h"
+#include "gl/gl2.h"
 
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef _OS_WIN32
+#ifndef __cplusplus
+typedef enum
+{
+    false = 0,
+    true
+} bool;
+#endif
+#else
 #include <stdbool.h>
+#endif
 
 void freemesh(mesh_s *mesh)
 {
@@ -59,6 +71,10 @@ void rendermesh(const mesh_s *mesh)
 void rendermat(const material_s *mat)
 {
     bool use_tex;
+#if !defined(_GLSL)
+    GLboolean color_enabled;
+#endif
+
     if(!mat)
         return;
 
@@ -66,18 +82,42 @@ void rendermat(const material_s *mat)
 
     if(use_tex)
     {
+#if defined(_GLSL)
+        glActiveTexture(GL_TEXTURE0);
+        GL_Uniform(GL_currprog, u_Texture2D, 1, 0);
+#endif
         glBindTexture(GL_TEXTURE_2D, mat->texture);
     }
     if(!mat->use_color)
     {
+#if defined(_GLSL)
+        GL_VertexAttribute(GL_currprog, a_Color, 4, sizeof(point_s), &(mat->points[0].color[0]));
+        GL_Uniform(GL_currprog, u_Color, 1, White_Color);
+#else
         glColorPointer(4, GL_FLOAT, sizeof(point_s), &(mat->points[0].color[0]));
+#endif
     }
     else
+    {
+#if defined(_GLSL)
+        GL_Uniform(GL_currprog, u_Color, 1, mat->color);
+#else
+        color_enabled = glIsEnabled(GL_COLOR_ARRAY);
+        if(color_enabled)
+            glDisableClientState(GL_COLOR_ARRAY);
         glColor4fv(mat->color);
+#endif
+    }
 
+#if defined(_GLSL)
+    GL_VertexAttribute(GL_currprog, a_Normal, 3, sizeof(point_s), &(mat->points[0].normal[0]));
+    GL_VertexAttribute(GL_currprog, a_Texcoord, 2, sizeof(point_s), &(mat->points[0].texcoord[0]));
+    GL_VertexAttribute(GL_currprog, a_Vertex, VERTEX_ELEMENT_COUNT, sizeof(point_s), &(mat->points[0].vertex[0]));
+#else
     glNormalPointer(GL_FLOAT, sizeof(point_s), &(mat->points[0].normal[0]));
     glTexCoordPointer(2, GL_FLOAT, sizeof(point_s), &(mat->points[0].texcoord[0]));
     glVertexPointer(VERTEX_ELEMENT_COUNT, GL_FLOAT, sizeof(point_s), &(mat->points[0].vertex[0]));
+#endif
 
     glDrawArrays(GL_TRIANGLES, 0, mat->count);
 
@@ -85,6 +125,11 @@ void rendermat(const material_s *mat)
     {
         glBindTexture(GL_TEXTURE_2D, 0);
     }
+
+#if !defined(_GLSL)
+    if(mat->use_color && color_enabled)
+        glEnableClientState(GL_COLOR_ARRAY);
+#endif
 }
 
 #define CPYELE(p) src->p = dst->p

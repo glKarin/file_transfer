@@ -6,7 +6,7 @@
 
 QT       += core gui opengl
 
-TARGET = file_transformer
+TARGET = file_transfer
 TEMPLATE = app
 
 DEFINES += _APP_NAME=\\\"FileTransfer\\\" \
@@ -17,6 +17,16 @@ _APP_RELEASE=20181224 \
 _APP_PKG=\\\"filetransfer\\\" \
 _APP_EMAIL=\\\"beyondk2000@gmail.com\\\" \
 _APP_GITHUB=\\\"https://github.com/glKarin/file_transfer\\\"
+
+#INCLUDEPATH += glew\\include
+#LIBS += "E:\\pro\\qt\\file_transfer\\glew\\lib\\Release\\Win32\\glew32s.lib"
+
+contains(MEEGO_EDITION, harmattan){
+DEFINES += _HARMATTAN
+DEFINES += _GLSL
+}
+DEFINES += _OS_WIN32
+#DEFINES += _GLSL
 
 
 SOURCES += main.cpp\
@@ -53,12 +63,15 @@ HEADERS += \
     gl/camera.h \
     gl/mesh.h \
     gl/qmath.h \
+		gl/gl2.h \
     gl/gl_std.h
 
 SOURCES += \
     gl/vector3.c \
     gl/camera.c \
-    gl/mesh.c
+    gl/mesh.c \
+    gl/gl2.c \
+    gl/gl_std.c
 
 FORMS    += mainwindow.ui \
     karin_filewindow.ui \
@@ -101,3 +114,10 @@ SOURCES += \
            mesa_math/m_vector.c \
            mesa_math/m_xform.c \
            mesa_math/main/imports.c
+
+glsl.files = \
+    glsl/default.vert \
+    glsl/default.frag
+glsl.path = ./glsl
+
+INSTALLS        += glsl

@@ -44,33 +44,14 @@ void karin_FileView::init()
 
 void karin_FileView::dragEnterEvent(QDragEnterEvent *event)
 {
-    QWidget *source;
-
-    qDebug()<<"drag enter";
-    source = event->source();
-    if (source) {
-        event->setDropAction(source != this ? Qt::CopyAction : Qt::MoveAction);
-    }
-    else
-    {
-        event->setDropAction(Qt::CopyAction);
-    }
+    //qDebug()<<"drag enter" << event->source<<this;
+    event->setDropAction(Qt::CopyAction);
     event->accept();
 }
 
 void karin_FileView::dragMoveEvent(QDragMoveEvent *event)
 {
-    QWidget *source;
-
-    //qDebug()<<"drag move";
-    source = event->source();
-    if (source) {
-        event->setDropAction(source != this ? Qt::CopyAction : Qt::MoveAction);
-    }
-    else
-    {
-        event->setDropAction(Qt::CopyAction);
-    }
+    //qDebug()<<"drag move" << event->source<<this;
     event->accept();
 }
 
@@ -79,33 +60,38 @@ void karin_FileView::dropEvent(QDropEvent *event)
     QWidget *source;
     const QMimeData *mime;
 
-    qDebug()<<"drop";
     source = event->source();
     mime = event->mimeData();
-    qDebug()<<source;
+    //qDebug()<<source;
     if (source) // from other widget
     {
         QString dst = getdropdst(event->pos());
-        if(source != this || !dst.isEmpty())
+        if(mime->text() != dst)
         {
-            qDebug()<<mime->text();
-            emit reqtransform(QStringList() << mime->text(), dst);
+            QStringList urls;
+            urls << mime->text();
+            qDebug() << "[Drop]: From other FileView urls: " << urls << " -> " << dst;
+            emit reqtransform(urls, dst);
             event->setDropAction(source != this ? Qt::CopyAction : Qt::MoveAction);
             event->accept();
         }
+        else
+            qWarning() << "[Drop]: can not move to self";
     }
-    else
+    else // from external
     {
         if(mime->hasFormat("text/uri-list"))
         {
+            QString dst = getdropdst(event->pos());
             QList<QUrl> urls = mime->urls();
+            qDebug() << "[Drop]: From external urls: " << urls << " -> " << dst;
             if(!urls.isEmpty())
             {
                 QStringList r;
                 Q_FOREACH(const QUrl &url, urls)
                     r.push_back(url.toLocalFile());
                 event->setDropAction(Qt::CopyAction);
-                emit reqtransform(r, getdropdst(event->pos()));
+                emit reqtransform(r, dst);
             }
             event->accept();
         }
@@ -124,24 +110,40 @@ void karin_FileView::mouseMoveEvent(QMouseEvent *event)
     if (event->buttons() & Qt::LeftButton) {
         int distance = (event->pos() - m_startpos).manhattanLength();
         if (distance >= QApplication::startDragDistance())
-            handledrag();
+            handledrag(event->pos());
     }
     QListView::mouseMoveEvent(event);
 }
 
-void karin_FileView::handledrag()
+bool karin_FileView::handledrag(const QPoint &pos)
 {
+    bool is_cur;
+    QMimeData *mimeData;
+    QDrag *drag;
+
+    is_cur = hastarget(pos);
+    if(!is_cur)
+    {
+        //qWarning() << "[MouseMove]: mouse click position has not a valid target.";
+        return false;
+    }
+
     QModelIndex index = currentIndex();
     if (index.isValid()) {
-        QMimeData *mimeData = new QMimeData;
-        mimeData->setText(m_model->filePath(index));
-        qDebug()<<"move "<<m_model->filePath(index);
+        QString target = m_model->filePath(index);
+        mimeData = new QMimeData;
+        mimeData->setText(target);
 
-        QDrag *drag = new QDrag(this);
+        qDebug() << "[MouseMove]: target path -> " << target;
+
+        drag = new QDrag(this);
         drag->setMimeData(mimeData);
         drag->exec();
         //drag->setPixmap(QPixmap(":/images/person.png"));
+        return true;
     }
+
+    return false;
 }
 
 void karin_FileView::setpath(const QString &path)
@@ -149,10 +151,37 @@ void karin_FileView::setpath(const QString &path)
     m_model->setPath(path);
 }
 
-QString karin_FileView::getdropdst(const QPoint &pos)
+QString karin_FileView::getdropdst(const QPoint &pos, bool *cur) const
 {
+    bool b;
+
     QModelIndex index = indexAt(pos);
-    if(index.isValid())
+    b = index.isValid();
+    if(cur)
+        *cur = b;
+
+    if(b)
         return m_model->filePath(index);
     return m_model->path();
+}
+
+bool karin_FileView::getdropdst(QString &r, const QPoint &pos, bool cur) const
+{
+    bool b;
+
+    QModelIndex index = indexAt(pos);
+    b = index.isValid();
+
+    if(cur && !b)
+        return false;
+
+    if(b)
+        r = m_model->filePath(index);
+    r = m_model->path();
+    return true;
+}
+
+bool karin_FileView::hastarget(const QPoint &pos) const
+{
+    return indexAt(pos).isValid();
 }

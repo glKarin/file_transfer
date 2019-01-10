@@ -1,7 +1,6 @@
 #ifndef _KARIN_MESH_H
 #define _KARIN_MESH_H
 
-#include <GL/gl.h>
 #include "gl_std.h"
 
 #ifdef __cplusplus
