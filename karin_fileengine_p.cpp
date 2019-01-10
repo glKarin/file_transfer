@@ -58,7 +58,7 @@ void karin_FileThread::start(QThread::Priority p)
     if(m_state != karin_FileThread::FileThread_Ready)
         return;
 
-    QThread::start(p);
+    QThread::start(p < QThread::HighPriority ? QThread::HighPriority : p);
 }
 
 void karin_FileThread::run()

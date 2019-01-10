@@ -16,6 +16,7 @@ karin_ProgressDialog::karin_ProgressDialog(QWidget *parent) :
     //FIXED_UI(this, ui->verticalLayoutWidget)
 
     init();
+
     connect(this, SIGNAL(finished(int)), this, SIGNAL(reqexit(int)));
     connect(btn(-1), SIGNAL(clicked()), this, SIGNAL(reqpause()));
     connect(btn(0), SIGNAL(clicked()), this, SIGNAL(reqnext()));
@@ -34,6 +35,7 @@ void karin_ProgressDialog::progresscb(int cur, const QString &desc)
 
 void karin_ProgressDialog::init()
 {
+    setWindowTitle(tr("Process Dialog"));
 }
 
 void karin_ProgressDialog::settitle(const QString &title)

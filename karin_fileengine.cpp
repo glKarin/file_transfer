@@ -301,7 +301,7 @@ int karin_FileEngine::mkdirs()
 
 void karin_FileEngine::mkingdir_slot(ftid_t id, const QString &dir, bool suc, quint32 count)
 {
-    static const QString Fmt = tr("make directory: %1(%2) -> %3, using %4");
+    static const QString Fmt = tr("Make directory: %1(%2) -> %3, using %4");
     QMutexLocker locker(m_mutex);
     Q_UNUSED(locker);
 
@@ -423,7 +423,7 @@ int karin_FileEngine::trans()
 
 void karin_FileEngine::transfer_slot(ftid_t id, const QString &file, bool suc, quint32 c, quint64 size)
 {
-    static const QString Fmt = tr("transfer file: %1 -> %2, count: %3, size: %4(%5 bytes), using %6");
+    static const QString Fmt = tr("Transfer file: %1 -> %2, count: %3, size: %4(%5 bytes), using %6");
     QMutexLocker locker(m_mutex);
     Q_UNUSED(locker);
 
@@ -450,7 +450,6 @@ void karin_FileEngine::transfer_slot(ftid_t id, const QString &file, bool suc, q
         sizec += s.size;
         filec += s.file_count;
     }
-    qDebug() << filec;
     proc.cur_unix_timestamp = QDateTime::currentMSecsSinceEpoch();
     per = (int)((qreal)filec / (qreal)m_filec * 100);
 
@@ -475,9 +474,9 @@ void karin_FileEngine::transferfinished_slot(ftid_t id, bool suc)
 
     if(transfer)
     {
-        proc.infos[id].file_count = transfer->m_count;
+        proc.infos[id].file_count = transfer->m_countc;
         proc.infos[id].dir_count = transfer->m_fails.size();
-        proc.infos[id].size = transfer->m_size;
+        proc.infos[id].size = transfer->m_sizec;
         transfer->deleteLater();
         if(!suc)
             emit errocc(karin_FileEngine::FileEngine_TransferFail);
@@ -557,7 +556,7 @@ int karin_FileEngine::check()
 
 void karin_FileEngine::check_slot(ftid_t id, const QString &file, bool suc, quint32 sc, quint32 fc)
 {
-    static const QString Fmt = tr("check file: %1 -> %2, %d success, %d fail, using %5");
+    static const QString Fmt = tr("Check file: %1 -> %2, %3 success, %4 fail, using %5");
     QMutexLocker locker(m_mutex);
     Q_UNUSED(locker);
 

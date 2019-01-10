@@ -28,6 +28,8 @@ void karin_SettingDialog::init()
 
     ut = karin_UT::Instance();
 
+    setWindowTitle(tr("Settings"));
+
     ui->enable_log->setChecked(ut->getsetting<bool>(SETTING_ENABLE_LOG));
     ui->thread->setValue(ut->getsetting<int>(SETTING_MAX_WORKING_THREAD));
     ui->thread->setMinimum(1);
@@ -35,6 +37,7 @@ void karin_SettingDialog::init()
 
     ui->log_level->hide();
     ui->log_level_label->hide();
+    ui->enable_log->setCheckable(false);
 
     connect(ui->thread, SIGNAL(valueChanged(int)), this, SLOT(thread_slot(int)));
     connect(ui->enable_log, SIGNAL(stateChanged(int)), this, SLOT(enablelog_slot(int)));
@@ -43,7 +46,6 @@ void karin_SettingDialog::init()
 void karin_SettingDialog::thread_slot(int v) const
 {
     karin_UT::Instance()->setsetting<int>(SETTING_MAX_WORKING_THREAD, v);
-    qDebug()<<v <<karin_UT::Instance()->getsetting<int>(SETTING_MAX_WORKING_THREAD);
 }
 
 void karin_SettingDialog::enablelog_slot(int v) const
@@ -63,6 +65,4 @@ void karin_SettingDialog::enablelog_slot(int v) const
     default:
         break;
     }
-    qDebug()<<state <<karin_UT::Instance()->getsetting<bool>(SETTING_ENABLE_LOG);
-
 }

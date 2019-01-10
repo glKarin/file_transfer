@@ -14,7 +14,7 @@ _APP_DEV=\\\"karin\\\" \
 _APP_VER=\\\"0.0.1harmattan1\\\" \
 _APP_CODE=\\\"katyusha\\\" \
 _APP_RELEASE=20181224 \
-_APP_PKG=\\\"filetransfer\\\" \
+_APP_PKG=\\\"$${TARGET}\\\" \
 _APP_EMAIL=\\\"beyondk2000@gmail.com\\\" \
 _APP_GITHUB=\\\"https://github.com/glKarin/file_transfer\\\"
 
@@ -120,4 +120,9 @@ glsl.files = \
     glsl/default.frag
 glsl.path = ./glsl
 
-INSTALLS        += glsl
+i18n.files = \
+    i18n/$${TARGET}.zh_CN.ts \
+    i18n/$${TARGET}.zh_CN.qm
+i18n.path = ./i18n
+
+INSTALLS        += i18n glsl

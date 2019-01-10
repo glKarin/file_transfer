@@ -95,7 +95,7 @@ void MainWindow::reqtransform_slot(const QStringList &src, const QString &dst)
     if(!m_dialog)
         m_dialog = new karin_ProgressDialog(this);
     m_file->prepare(src, dst);
-    m_dialog->settitle(tr("Progress Dialog"));
+    m_dialog->settitle(tr("Progressing"));
     connect(m_file, SIGNAL(updating(int, const QString &)), this, SLOT(updating_slot(int, const QString &)));
     connect(m_dialog, SIGNAL(reqexit(int)), this, SLOT(reqexit_slot(int)));
     connect(m_dialog, SIGNAL(reqpause()), this, SLOT(reqpause_slot()));
@@ -157,7 +157,7 @@ void MainWindow::stateChanged_slot()
     else if(s == karin_FileEngine::FileEngine_Done)
     {
         m_dialog->settoolvisible(true, false);
-        m_dialog->settoolstr(tr("Cancel"), "");
+        m_dialog->settoolstr(tr("Done"), "");
     }
 }
 
@@ -210,6 +210,10 @@ void MainWindow::reqnext_slot()
     else if(s == karin_FileEngine::FileEngine_Transed)
     {
         m_file->check();
+    }
+    else if(s == karin_FileEngine::FileEngine_Done)
+    {
+        m_dialog->done(0);
     }
 }
 
