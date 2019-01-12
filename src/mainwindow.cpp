@@ -7,6 +7,7 @@
 #include "karin_std.h"
 #include "karin_settingdialog.h"
 #include "karin_glsplash.h"
+#include "img_src/qt/karin_nltmainwindow.h"
 
 #include <QTimer>
 #include <QMessageBox>
@@ -56,6 +57,7 @@ void MainWindow::init()
 
         menuBar()->addMenu(menu);
     }
+
     {
         menu = new QMenu(tr("&Other"));
 
@@ -69,6 +71,16 @@ void MainWindow::init()
 
         action = new QAction(tr("&About"), this);
         connect(action, SIGNAL(triggered()), this, SLOT(showabout()));
+        menu->addAction(action);
+
+        menuBar()->addMenu(menu);
+    }
+
+    {
+        menu = new QMenu(tr("&Image"));
+
+        action = new QAction(tr("&convertor"), this);
+        connect(action, SIGNAL(triggered()), this, SLOT(nlt()));
         menu->addAction(action);
 
         menuBar()->addMenu(menu);
@@ -229,6 +241,19 @@ void MainWindow::gl()
     dialog->resize(splash->size());
 
     dialog->exec();
+}
+
+void MainWindow::nlt()
+{
+    static karin_NLTMainWindow *window = 0;
+
+    if(!window)
+    {
+        window = new karin_NLTMainWindow;
+        window->setAttribute(Qt::WA_DeleteOnClose, true);
+    }
+
+    window->show();
 }
 
 WRITE_SETTING_DECL(QString, SETTING_LEFT_PATH)

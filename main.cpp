@@ -6,6 +6,8 @@
 #include "karin_ut.h"
 #include "karin_fileengine_p.h"
 #include "karin_glsplash.h"
+#include "qt/karin_nltmainwindow.h"
+#include "qt/karin_nltviewer.h"
 
 
 #include <QtCore>
@@ -15,8 +17,10 @@
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    MainWindow w;
+    //MainWindow w;
     //karin_GLSplash w;
+    karin_NLTMainWindow w;
+    //karin_NLTViewer w;
     QSplashScreen *splash;
 
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
@@ -51,6 +55,7 @@ int main(int argc, char *argv[])
     splash->deleteLater();
 
     w.show();
+    //w.open("D:/phpStudy/PHPTutorial/WWW/tcjk/static/icon/g_conf_list.png");
     //QTimer::singleShot(2000, splash, SLOT(deleteLater()));
     //QObject::connect(splash, SIGNAL(destroyed()), &w, SLOT(show()));
 

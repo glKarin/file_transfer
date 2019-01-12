@@ -35,11 +35,13 @@ QVariant karin_UT::Defsettings(const QString &key)
     static QHash<QString, QVariant> Def_Setting; // = {} // c++11
     if(Def_Setting.isEmpty())
     {
-        Def_Setting.insert(SETTING_LEFT_PATH, QDir::homePath());
-        Def_Setting.insert(SETTING_RIGHT_PATH, QDir::rootPath());
+        Def_Setting.insert(SETTING_LEFT_PATH, QDir::currentPath());
+        Def_Setting.insert(SETTING_RIGHT_PATH, QDir::homePath());
         Def_Setting.insert(SETTING_LOG_LEVEL, false);
         Def_Setting.insert(SETTING_ENABLE_LOG, karin_UT::Log_All_Level & (~karin_UT::Log_Debug_Level));
         Def_Setting.insert(SETTING_MAX_WORKING_THREAD, 8);
+        Def_Setting.insert(SETTING_LAST_OPEN_IMAGE_PATH, QDir::currentPath());
+        Def_Setting.insert(SETTING_LAST_SAVE_IMAGE_PATH, QDir::currentPath());
     }
     return Def_Setting.value(key);
 }

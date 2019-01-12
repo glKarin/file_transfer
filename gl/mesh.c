@@ -32,9 +32,9 @@ void freemat(material_s *mat)
     if(!mat)
         return;
     free(mat->points);
-    if(glIsTexture(mat->texture))
-        glDeleteTextures(1, &mat->texture);
-    mat->texture = 0;
+    if(glIsTexture(mat->texture.tex_id))
+        glDeleteTextures(1, &mat->texture.tex_id);
+    memset(&mat->texture, 0, sizeof(texture2d_s));
     mat->count = 0;
 }
 
@@ -52,7 +52,7 @@ void newmat(material_s *mat, int count)
         return;
     mat->count = count;
     mat->points = (point_s *)calloc(mat->count, sizeof(point_s));
-    mat->texture = 0;
+    memset(&mat->texture, 0, sizeof(texture2d_s));
     mat->color[0] = mat->color[1] = mat->color[2] = mat->color[3] = 1.0;
     mat->use_color = true;
 }
@@ -78,7 +78,7 @@ void rendermat(const material_s *mat)
     if(!mat)
         return;
 
-    use_tex = glIsTexture(mat->texture) && glIsEnabled(GL_TEXTURE_2D);
+    use_tex = glIsEnabled(GL_TEXTURE_2D) && glIsTexture(mat->texture.tex_id);
 
     if(use_tex)
     {
@@ -86,7 +86,7 @@ void rendermat(const material_s *mat)
         glActiveTexture(GL_TEXTURE0);
         GL_Uniform(GL_currprog, u_Texture2D, 1, 0);
 #endif
-        glBindTexture(GL_TEXTURE_2D, mat->texture);
+        glBindTexture(GL_TEXTURE_2D, mat->texture.tex_id);
     }
     if(!mat->use_color)
     {
@@ -164,3 +164,31 @@ void meshcpy(mesh_s * RESTRICT src, const mesh_s * RESTRICT dst)
     memcpy(src->rotation, dst->rotation, sizeof(GLfloat) * 3);
 }
 #undef CPYELE
+
+int loadtex2d(texture2d_s *r, const void *data)
+{
+    GLuint tex;
+    GLboolean enable_tex2d;
+
+    if(!r || !data)
+        return -1;
+
+    enable_tex2d = glIsEnabled(GL_TEXTURE_2D);
+    if(!enable_tex2d)
+        glEnable(GL_TEXTURE_2D);
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, r->width, r->height, 0, r->format, GL_UNSIGNED_BYTE, data);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    r->tex_id = tex;
+    if(!enable_tex2d)
+        glDisable(GL_TEXTURE_2D);
+    return 0;
+}

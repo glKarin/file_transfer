@@ -7,6 +7,14 @@
 extern "C" {
 #endif
 
+typedef struct _texture2d_s
+{
+    GLuint tex_id;
+    GLint width;
+    GLint height;
+    GLenum format;
+} texture2d_s;
+
 #define VERTEX_ELEMENT_COUNT 4
 typedef struct _point_s
 {
@@ -21,7 +29,7 @@ typedef struct _material_s
     struct _point_s *points;
     int count;
 
-    GLuint texture;
+    texture2d_s texture;
     GLfloat color[4];
     GLboolean use_color;
     GLenum face;
@@ -49,6 +57,8 @@ void newmesh(mesh_s *mesh, int count);
 void newmat(material_s *mat, int count);
 void matcpy(material_s * RESTRICT src, const material_s * RESTRICT dst);
 void meshcpy(mesh_s * RESTRICT src, const mesh_s * RESTRICT dst);
+
+int loadtex2d(texture2d_s *r, const void *data);
 
 #ifdef __cplusplus
 }

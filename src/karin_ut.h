@@ -10,6 +10,8 @@
 #define SETTING_RIGHT_PATH "right_path"
 #define SETTING_LOG_LEVEL "log_level"
 #define SETTING_ENABLE_LOG "enable_log"
+#define SETTING_LAST_OPEN_IMAGE_PATH "last_open_image_path"
+#define SETTING_LAST_SAVE_IMAGE_PATH "last_save_image_path"
 #define SETTING_MAX_WORKING_THREAD "max_working_thread"
 
 #define LOG_DIR "./.logs"

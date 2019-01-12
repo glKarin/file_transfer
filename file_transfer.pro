@@ -18,6 +18,8 @@ _APP_PKG=\\\"$${TARGET}\\\" \
 _APP_EMAIL=\\\"beyondk2000@gmail.com\\\" \
 _APP_GITHUB=\\\"https://github.com/glKarin/file_transfer\\\"
 
+INCLUDEPATH += gl src img_src SOIL
+
 #INCLUDEPATH += glew\\include
 #LIBS += "E:\\pro\\qt\\file_transfer\\glew\\lib\\Release\\Win32\\glew32s.lib"
 
@@ -29,54 +31,83 @@ DEFINES += _OS_WIN32
 #DEFINES += _GLSL
 
 
+# file
 SOURCES += main.cpp\
-        mainwindow.cpp \
-    karin_filewindow.cpp \
-    karin_ut.cpp \
-    karin_fsmodel.cpp \
-    karin_fileengine.cpp \
-    karin_progressdialog.cpp \
-    karin_fileview.cpp \
-    karin_fileengine_p.cpp \
-    karin_std.cpp \
-    karin_settingdialog.cpp \
-    karin_glsplash.cpp \
-    mesa_gl_math.c \
-    glut2.cpp
+        src/mainwindow.cpp \
+    src/karin_filewindow.cpp \
+    src/karin_ut.cpp \
+    src/karin_fsmodel.cpp \
+    src/karin_fileengine.cpp \
+    src/karin_progressdialog.cpp \
+    src/karin_fileview.cpp \
+    src/karin_fileengine_p.cpp \
+    src/karin_std.cpp \
+    src/karin_settingdialog.cpp \
+    src/karin_glsplash.cpp \
+    img_src/nl_std.c \
+    img_src/nl_gl.c \
+    img_src/qt/karin_nltviewer.cpp \
+    src/karin_glwidget.cpp \
+    img_src/qt/karin_nltmainwindow.cpp \
+    img_src/nl_errno.c \
+    img_src/nl_reader.c
 
-HEADERS  += mainwindow.h \
-    karin_filewindow.h \
-    karin_ut.h \
-    karin_fsmodel.h \
-    karin_std.h \
-    karin_fileengine.h \
-    karin_progressdialog.h \
-    karin_fileview.h \
-    karin_fileengine_p.h \
-    karin_settingdialog.h \
-    karin_glsplash.h \
-    mesa_gl_math.h \
-    glut2.h
+HEADERS  += src/mainwindow.h \
+    src/karin_filewindow.h \
+    src/karin_ut.h \
+    src/karin_fsmodel.h \
+    src/karin_std.h \
+    src/karin_fileengine.h \
+    src/karin_progressdialog.h \
+    src/karin_fileview.h \
+    src/karin_fileengine_p.h \
+    src/karin_settingdialog.h \
+    src/karin_glsplash.h \
+    img_src/nl_errno.h \
+    img_src/nl_std.h \
+    img_src/qt/karin_nltviewer.h \
+    src/karin_glwidget.h \
+    img_src/qt/karin_nltmainwindow.h
 
+# gl
 HEADERS += \
     gl/vector3.h \
     gl/camera.h \
     gl/mesh.h \
     gl/qmath.h \
-		gl/gl2.h \
-    gl/gl_std.h
+    gl/gl2.h \
+    gl/gl_std.h \
+    gl/mesa_gl_math.h \
+    gl/glut2.h
 
 SOURCES += \
     gl/vector3.c \
     gl/camera.c \
     gl/mesh.c \
     gl/gl2.c \
-    gl/gl_std.c
+    gl/gl_std.c \
+    gl/mesa_gl_math.c \
+    gl/glut2.cpp
+
+#SOIL
+HEADERS += SOIL/image_DXT.h \
+           SOIL/image_helper.h \
+           SOIL/SOIL.h \
+           SOIL/stb_image_aug.h \
+           SOIL/stbi_DDS_aug.h \
+           SOIL/stbi_DDS_aug_c.h
+
+SOURCES += SOIL/image_DXT.c \
+           SOIL/image_helper.c \
+           SOIL/SOIL.c \
+           SOIL/stb_image_aug.c
+
 
 FORMS    += mainwindow.ui \
     karin_filewindow.ui \
     karin_progressdialog.ui \
-    karin_settingdialog.ui
+    karin_settingdialog.ui \
+    img_src/qt/karin_nltmainwindow.ui
 
 RESOURCES += \
     karin.qrc
@@ -86,7 +117,7 @@ OTHER_FILES += \
 
 # Mesa GL math
 HEADERS += \
- mesa_math/m_clip_tmp.h \
+           mesa_math/m_clip_tmp.h \
            mesa_math/m_copy_tmp.h \
            mesa_math/m_debug.h \
            mesa_math/m_debug_util.h \
@@ -105,7 +136,7 @@ HEADERS += \
            mesa_math/main/imports.h \
            mesa_math/main/macros.h
 SOURCES += \
- mesa_math/m_debug_clip.c \
+           mesa_math/m_debug_clip.c \
            mesa_math/m_debug_norm.c \
            mesa_math/m_debug_xform.c \
            mesa_math/m_eval.c \

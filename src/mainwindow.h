@@ -36,6 +36,7 @@ private Q_SLOTS:
     void reqpause_slot();
     void reqnext_slot();
     void gl();
+    void nlt();
     
 private:
     Ui::MainWindow *ui;
