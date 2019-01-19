@@ -9,6 +9,40 @@
 #include <QCryptographicHash>
 #include <QDebug>
 
+#define FILE_SUM_READ_BUF_SIZE 4096
+
+#define FILE_SUM_FUNCTION(T, filePath) \
+{ \
+    QFile file(filePath); \
+    quint64 total = 0; \
+    quint64 written = 0; \
+    quint64 unwrite = 0; \
+    QByteArray buf; \
+ \
+    if (!file.open(QFile::ReadOnly)) \
+    { \
+        return 0; \
+    } \
+ \
+    QCryptographicHash ch(QCryptographicHash::T); \
+ \
+    total = file.size(); \
+    unwrite = total; \
+ \
+    while(written < total) \
+    { \
+        buf = file.read(qMin(unwrite, (quint64)FILE_SUM_READ_BUF_SIZE)); \
+        ch.addData(buf); \
+        written += buf.length(); \
+        unwrite -= buf.length(); \
+        buf.resize(0); \
+    } \
+ \
+    file.close(); \
+    QByteArray T = ch.result(); \
+    return T; \
+}
+
 QString fformatp(mask_t per)
 {
 #define P_R "r"
@@ -189,35 +223,12 @@ int randr(int min, int max)
 
 QByteArray filemd5(const QString &filePath)
 {
-    const quint64 Buf_Size = 4096;
-    QFile file(filePath);
-    quint64 total = 0;
-    quint64 written = 0;
-    quint64 unwrite = 0;
-    QByteArray buf;
+    FILE_SUM_FUNCTION(Md5, filePath)
+}
 
-    if (!file.open(QFile::ReadOnly))
-    {
-        return 0;
-    }
-
-    QCryptographicHash ch(QCryptographicHash::Md5);
-
-    total = file.size();
-    unwrite = total;
-
-    while(written < total)
-    {
-        buf = file.read(qMin(unwrite, Buf_Size));
-        ch.addData(buf);
-        written += buf.length();
-        unwrite -= buf.length();
-        buf.resize(0);
-    }
-
-    file.close();
-    QByteArray md5 = ch.result();
-    return md5;
+QByteArray filesha1(const QString &filePath)
+{
+    FILE_SUM_FUNCTION(Sha1, filePath)
 }
 
 int fcmp(const QString &f, const QString &s)

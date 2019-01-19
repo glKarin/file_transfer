@@ -3,6 +3,7 @@
 #include "karin_std.h"
 
 #include <QAbstractButton>
+#include <QScrollBar>
 #include <QDebug>
 
 #define FLOAT_TO_INT // qround
@@ -27,15 +28,21 @@ karin_ProgressDialog::~karin_ProgressDialog()
     delete ui;
 }
 
-void karin_ProgressDialog::progresscb(int cur, const QString &desc)
+void karin_ProgressDialog::progresscb(int cur, const QString &desc, const QString &log)
 {
     ui->work_progressbar->setValue(cur < 0 || cur > 100 ? 100 : cur);
     ui->work_desc->setText(desc);
+    if(!log.isEmpty())
+    {
+        ui->log_browser->append(log + "<br/>");
+        ui->log_browser->verticalScrollBar()->triggerAction(QAbstractSlider::SliderToMaximum);
+    }
 }
 
 void karin_ProgressDialog::init()
 {
     setWindowTitle(tr("Process Dialog"));
+    setFixedSize(size());
 }
 
 void karin_ProgressDialog::settitle(const QString &title)

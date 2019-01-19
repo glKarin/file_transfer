@@ -320,8 +320,8 @@ void GL_DeleteProgram(struct GL_program_s *p)
         return;
     if(glIsProgram(p->program))
     {
-        glDetachShader(p->vshader);
-        glDetachShader(p->fshader);
+        glDetachShader(p->program, p->vshader);
+        glDetachShader(p->program, p->fshader);
         glDeleteShader(p->vshader);
         glDeleteShader(p->fshader);
         glDeleteProgram(p->program);

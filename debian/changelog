@@ -1,4 +1,11 @@
+file_transfer (0.0.2harmattan1) unstable; urgency=low
+
+  * Image viewer.
+
+ -- Karin <beyondk2000@gmail.com>  Fri, 18 Jan 2018 08:29:56 +0800
+
 file_transfer (0.0.1harmattan1) unstable; urgency=low
+
   * Initial version.
 
  -- Karin <beyondk2000@gmail.com>  Mon, 24 Dec 2018 08:29:56 +0800

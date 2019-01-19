@@ -17,9 +17,9 @@
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    //MainWindow w;
+    MainWindow w;
     //karin_GLSplash w;
-    karin_NLTMainWindow w;
+    //karin_NLTMainWindow w;
     //karin_NLTViewer w;
     QSplashScreen *splash;
 
@@ -60,8 +60,9 @@ int main(int argc, char *argv[])
     //QObject::connect(splash, SIGNAL(destroyed()), &w, SLOT(show()));
 
     /*
-    D:/prog/QtSDK/Desktop/Qt/4.8.1/msvc2010/bin/lupdate.exe -no-obsolete ./*.cpp ./*.h gl/* -ts i18n/file_transfer.zh_CN.ts
-    D:/prog/QtSDK/Desktop/Qt/4.8.1/msvc2010/bin/lupdate.exe -no-obsolete ./* gl/* -ts i18n/file_transfer.ts
+D:/prog/QtSDK/Desktop/Qt/4.8.1/msvc2010/bin/lupdate.exe -no-obsolete src/*.cpp src/*.h gl/* img_src/qt/*.cpp *.ui src/*.ui img_src/qt/*.ui -ts i18n/file_transfer.zh_CN.ts
+
+    D:/prog/QtSDK/Desktop/Qt/4.8.1/msvc2010/bin/lrelease.exe i18n/file_transfer.zh_CN.ts i18n/file_transfer.zh_CN.qm
     */
     
     return app.exec();

@@ -135,6 +135,15 @@ void Mesa_glTransform4(float r[4], const float p[4], const GLmatrix *mat)
     _mesa_transform_vector(r, p, mat->m);
 }
 
+void Mesa_glTranspose(GLmatrix *mat)
+{
+    float tm[16];
+    IF_NULL_RETURN(mat)
+
+   _math_transposef(tm, mat->m);
+    _math_matrix_loadf( mat, tm );
+}
+
 void Mesa_AllocGLMatrix(GLmatrix *mat)
 {
     if(!mat)

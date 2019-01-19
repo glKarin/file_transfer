@@ -204,9 +204,9 @@ int karin_FileScanner::getallfiles()
     QFileInfo info(m_dirstr);
     if(info.isDir())
     {
+        m_dirstr = info.absolutePath();
         m_dir = new QDir(m_dirstr);
-        m_dirstr = info.absoluteFilePath();
-        c = getallfiles_r(m_dir->absolutePath(), &m_files, &m_dirs);
+        c = getallfiles_r(info.absoluteFilePath(), &m_files, &m_dirs);
     }
     else
     {
@@ -281,6 +281,7 @@ int karin_FileDirMaker::mkdir()
 {
     int c;
 
+    c = 0;
     Q_FOREACH(const QString &s, m_dirs)
     {
         if(mkdir_p(s) >= 0)

@@ -37,7 +37,7 @@ private:
     void init();
     bool handledrag(const QPoint &pos);
     QString getdropdst(const QPoint &pos, bool *cur = 0) const;
-    bool karin_FileView::getdropdst(QString &r, const QPoint &pos, bool cur = false) const;
+    bool getdropdst(QString &r, const QPoint &pos, bool cur = false) const;
     bool hastarget(const QPoint &pos) const;
 
 private:

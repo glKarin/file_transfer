@@ -11,7 +11,7 @@ TEMPLATE = app
 
 DEFINES += _APP_NAME=\\\"FileTransfer\\\" \
 _APP_DEV=\\\"karin\\\" \
-_APP_VER=\\\"0.0.1harmattan1\\\" \
+_APP_VER=\\\"0.0.2harmattan1\\\" \
 _APP_CODE=\\\"katyusha\\\" \
 _APP_RELEASE=20181224 \
 _APP_PKG=\\\"$${TARGET}\\\" \
@@ -50,7 +50,10 @@ SOURCES += main.cpp\
     src/karin_glwidget.cpp \
     img_src/qt/karin_nltmainwindow.cpp \
     img_src/nl_errno.c \
-    img_src/nl_reader.c
+    img_src/nl_reader.c \
+    src/karin_filecmpdialog.cpp \
+    gl/shadow.cpp \
+    img_src/huffman.c
 
 HEADERS  += src/mainwindow.h \
     src/karin_filewindow.h \
@@ -67,7 +70,10 @@ HEADERS  += src/mainwindow.h \
     img_src/nl_std.h \
     img_src/qt/karin_nltviewer.h \
     src/karin_glwidget.h \
-    img_src/qt/karin_nltmainwindow.h
+    img_src/qt/karin_nltmainwindow.h \
+    src/karin_filecmpdialog.h \
+    gl/shadow.h \
+    img_src/huffman.h
 
 # gl
 HEADERS += \
@@ -107,7 +113,8 @@ FORMS    += mainwindow.ui \
     karin_filewindow.ui \
     karin_progressdialog.ui \
     karin_settingdialog.ui \
-    img_src/qt/karin_nltmainwindow.ui
+    img_src/qt/karin_nltmainwindow.ui \
+    src/karin_filecmpdialog.ui
 
 RESOURCES += \
     karin.qrc

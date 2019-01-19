@@ -10,9 +10,14 @@
 #define SETTING_RIGHT_PATH "right_path"
 #define SETTING_LOG_LEVEL "log_level"
 #define SETTING_ENABLE_LOG "enable_log"
+#define SETTING_MAX_WORKING_THREAD "max_working_thread"
+#define SETTING_OPEN_FILE_EXTERNALLY "open_file_externally"
+
 #define SETTING_LAST_OPEN_IMAGE_PATH "last_open_image_path"
 #define SETTING_LAST_SAVE_IMAGE_PATH "last_save_image_path"
-#define SETTING_MAX_WORKING_THREAD "max_working_thread"
+
+#define SETTING_LAST_OPEN_CMP_FILE1_PATH "last_open_cmp_file1_path"
+#define SETTING_LAST_OPEN_CMP_FILE2_PATH "last_open_cmp_file2_path"
 
 #define LOG_DIR "./.logs"
 #define LOG_FILE_PREFIX "log"

@@ -7,12 +7,15 @@
 #include <QObject>
 #include <QHash>
 
-#define FILE_ENGINE_MAX_WORKING_THREAD 16
+#define FILE_ENGINE_MAX_WORKING_THREAD 32
 
 class karin_FileScanner;
 class karin_FileTransfer;
 class karin_FileDirMaker;
 class QMutex;
+
+extern const QString Task_Names[];
+extern const QString Task_State[];
 
 struct file_info_s
 {
@@ -77,6 +80,15 @@ public:
         FileEngine_T,
         FileEngine_C,
     };
+    enum FileEngine_Task_State_e
+    {
+        FileEngine_Task_Ready = 0,
+        FileEngine_Task_Start,
+        FileEngine_Task_Pause,
+        FileEngine_Task_Doing,
+        FileEngine_Task_Success,
+        FileEngine_Task_Fail,
+    };
 
 public:
     enum FileEngine_Err_e
@@ -110,7 +122,7 @@ public Q_SLOTS:
     void pause();
 
 Q_SIGNALS:
-    void updating(int per, const QString &str);
+    void updating(int per, const QString &msg, int proc, const QString &file, int suc, quint64 time);
     void errocc(int err);
     void stateChanged(FileEngine_State_e s);
 

@@ -71,24 +71,11 @@
         </property>
         <layout class="QVBoxLayout" name="work_layout">
          <item>
-          <spacer name="verticalSpacer">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
           <widget class="QLabel" name="work_label">
            <property name="minimumSize">
             <size>
              <width>0</width>
-             <height>32</height>
+             <height>0</height>
             </size>
            </property>
            <property name="text">
@@ -103,28 +90,28 @@
           </widget>
          </item>
          <item>
-          <spacer name="verticalSpacer_4">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
+          <widget class="QTextBrowser" name="log_browser">
+           <property name="documentTitle">
+            <string>Log</string>
            </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
+           <property name="lineWrapMode">
+            <enum>QTextEdit::NoWrap</enum>
            </property>
-          </spacer>
+          </widget>
          </item>
          <item>
           <widget class="QLabel" name="work_desc">
            <property name="minimumSize">
             <size>
              <width>0</width>
-             <height>96</height>
+             <height>0</height>
             </size>
            </property>
            <property name="text">
             <string/>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
            </property>
            <property name="wordWrap">
             <bool>false</bool>

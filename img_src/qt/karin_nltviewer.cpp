@@ -3,11 +3,14 @@
 #include "img_src/nl_std.h"
 
 #include <QDebug>
+#include <QWheelEvent>
 
 #define SCENE2D_RANGE 1
+#define SCALE_MIN 0.01
 
 karin_NLTViewer::karin_NLTViewer(QWidget *parent) :
-    karin_GLWidget(parent)
+    karin_GLWidget(parent),
+    m_scale(1.0)
 {
     memset(&m_mesh, 0, sizeof(mesh_s));
 }
@@ -33,19 +36,32 @@ void karin_NLTViewer::deinit()
 
 void karin_NLTViewer::paintGL()
 {
+    GLfloat w, h;
+
     if(m_mesh.count == 0)
         return;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    render2d(0, SCENE2D_RANGE, 0, SCENE2D_RANGE);
+    w = (GLfloat)size().width()/ 2;
+    h = (GLfloat)size().height()/ 2;
+    render2d(-w, w, -h, h);
     {
         setmvp(0);
+#ifndef _GLSL
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glPushMatrix();
+        {
+            glScalef(m_scale, m_scale, m_scale);
+#endif
         rendermesh(&m_mesh);
+#ifndef _GLSL
+        }
+        glPopMatrix();
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+#endif
     }
 
     glFlush();
@@ -60,10 +76,15 @@ void karin_NLTViewer::open(const QString &qfile)
     NL_texture_s nl;
     const char *file;
     std::string std_file;
+    GLfloat w, h;
 
     std_file = qfile.toStdString();
     file = std_file.c_str();
     channel = 0;
+
+    camidentity(&m_cam);
+    setcamera();
+    m_scale = 1.0f;
 
     if(m_mesh.count == 0)
     {
@@ -150,6 +171,25 @@ void karin_NLTViewer::open(const QString &qfile)
         mat->texture.width = width;
         mat->texture.height = height;
         loadtex2d(&mat->texture, data);
+        w = (GLfloat)mat->texture.width / 2;
+        h = (GLfloat)mat->texture.height / 2;
+        GLfloat vs[] = {
+            -w, -h,
+            w, -h,
+            -w, h,
+
+            -w, h,
+            w, -h,
+            w, h
+        };
+
+        for(int i = 0; i < 6; i++)
+        {
+            mat->points[i].vertex[0] = vs[i * 2];
+            mat->points[i].vertex[1] = vs[i * 2 + 1];
+        }
+
+        rs();
     }
     qDebug()<<mat->texture.tex_id<<mat->texture.width<<mat->texture.height<<channel<<qfile;
 
@@ -187,4 +227,62 @@ void karin_NLTViewer::tonlt(const QString &dst, const QString &src)
     }
 
     free(data);
+}
+
+void karin_NLTViewer::mouseMoveEvent(QMouseEvent *event)
+{
+    vector3_s v;
+
+    if(m_pressed)
+    {
+        if((event->modifiers() & Qt::ControlModifier) == 0)
+        {
+            QPoint delta = event->pos() - m_lastpos;
+            if(!delta.isNull())
+            {
+                m_lastpos = event->pos();
+                v = Vector3D(-delta.x(), delta.y(), 0);
+                cammove(&m_cam, &v);
+                setcamera();
+                updateGL();
+            }
+        }
+    }
+}
+
+void karin_NLTViewer::mousePressEvent(QMouseEvent *event)
+{
+    karin_GLWidget::mousePressEvent(event);
+}
+
+void karin_NLTViewer::mouseReleaseEvent(QMouseEvent *event)
+{
+    karin_GLWidget::mouseReleaseEvent(event);
+}
+
+void karin_NLTViewer::wheelEvent(QWheelEvent *event)
+{
+     m_scale = qMax<float>(m_scale + (float)event->delta() / 5000, SCALE_MIN);
+     updateGL();
+}
+
+void karin_NLTViewer::resizeGL(int w, int h)
+{
+    karin_GLWidget::resizeGL(w, h);
+    rs();
+}
+
+void karin_NLTViewer::rs()
+{
+    material_s *mat;
+
+    if(m_mesh.count == 0)
+        return;
+
+    mat = m_mesh.materials;
+
+    if(!glIsTexture(mat->texture.tex_id))
+        return;
+
+    m_scale = 1.0 / qMax(1.0f, qMax((float)mat->texture.width / (float)size().width(), (float)mat->texture.height / (float)size().height()));
 }

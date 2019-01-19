@@ -65,75 +65,9 @@ int nlMakeNLTexture(NL_texture_s *r, int w, int h, int alpha, const GLubyte *dat
     size = r->width * r->height;
     colors = (GLubyte *)calloc(size * s, sizeof(GLubyte));
 
-    for(i = 0; i < size; i++)
-    {
-        has = 0;
-        c8 = (data + (sizeof(GLubyte) * i * s));
-        for(j = 0; j < count; j++)
-        {
-            c = colors + j * s;
-            if((alpha && NL_CMP4(c8, c))
-                    || (!alpha && NL_CMP3(c8, c)))
-            {
-                has = 1;
-                break;
-            }
-        }
-        printf("%d has %d\n", i, has);
-        if(!has)
-        {
-            if(alpha)
-            {
-                NL_CPY4(colors + count * s, c8)
-            }
-            else
-            {
-                NL_CPY3(colors + count * s, c8)
-            }
-            count++;
-        }
-    }
+    r->color_table = (uint8_t *)calloc(size * s, 1);
 
-    printf("color_count %d\n", count);
-
-    r->color_count = count;
-    r->color_table = (uint8_t *)calloc(count * s, 1);
-    if(alpha)
-    {
-        for(i = 0; i < r->color_count; i++)
-        {
-            c8 = (GLubyte *)(colors + i * s);
-            NL_CPY4(r->color_table + i * s, c8)
-
-        }
-    }
-    else
-    {
-        for(i = 0; i < r->color_count; i++)
-        {
-            c8 = (GLubyte *)(colors + i * s);
-            NL_CPY3(r->color_table + i * s, c8)
-        }
-    }
-    printf("table_size %d %d %d\n", size, w, h);
-
-    r->index_table = (uint32_t *)calloc(size, 4);
-    for(i = 0; i < size; i++)
-    {
-        c8 = (data + (sizeof(GLubyte) * i * s));
-        for(j = 0; j < r->color_count; j++)
-        {
-            cstd8 = r->color_table + (s * j);
-            if((alpha && NL_CMP4(cstd8, c8))
-                    || (!alpha && NL_CMP3(cstd8, c8)))
-            {
-                r->index_table[index] = j;
-                printf("%d -> %d %d\n", i, index, j);
-                index++;
-                break;
-            }
-        }
-    }
+    memcpy(r->color_table, data, size * s);
 
     return NL_NO_ERROR;
 }
@@ -158,28 +92,7 @@ int nlMakeGLTexture(GLubyte **r, const NL_texture_s *nl, int *w, int *h)
     s = nl->alpha ? 4 : 3;
     data = (GLubyte *)calloc(size * s, sizeof(GLubyte));
 
-    if(nl->alpha)
-    {
-        for(i = 0; i < size; i++)
-        {
-            index = nl->color_table[i];
-            cstd8 = nl->color_table + (index * s);
-            c8 = (data + (sizeof(GLubyte) * i * s));
-
-            NL_CPY4(c8, cstd8)
-        }
-    }
-    else
-    {
-        for(i = 0; i < size; i++)
-        {
-            index = nl->color_table[i];
-            cstd8 = nl->color_table + (index * s);
-            c8 = (data + (sizeof(GLubyte) * i * s));
-
-            NL_CPY3(c8, cstd8)
-        }
-    }
+    memcpy(data, nl->color_table, size * s);
 
     *r = data;
 

@@ -26,7 +26,7 @@ Q_SIGNALS:
     void reqnext();
 
 public Q_SLOTS:
-    void progresscb(int cur, const QString &desc);
+    void progresscb(int cur, const QString &desc, const QString &log);
     void settitle(const QString &title);
     void setcurtitle(const QString &title);
     void setper(float f);

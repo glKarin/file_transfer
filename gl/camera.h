@@ -14,6 +14,8 @@ extern "C" {
 #define ator(a) ((double)(a) / 180.0 * M_PI)
 #define rtoa(r) ((double)(r) / M_PI * 180.0)
 
+#define camidentity newcam
+
 enum Direction_e
 {
     Direction_Forward = 0,

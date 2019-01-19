@@ -31,16 +31,15 @@ protected:
 private:
     void rendershadow(const mesh_s *cube, const vector3_s *lpos, int render_count);
     void rendershadowscene();
+    void renderscene();
     void starttimer();
     bool keyev(QKeyEvent *event, bool pressed);
-    void drawscene(const mesh_s *cube, bool plane = true);
     vector3_s lightingdir(const GLfloat v[3], const vector3_s *lightpos, bool dirlight = false) const;
     void shadowvol(mesh_s *r, const vector3_s *lightpos, const material_s *mat) const;
     void caletrans(material_s *r, const material_s *src, const GLmatrix *mat) const;
 
-private Q_SLOTS:
-    void idle();
-    void transform();
+protected Q_SLOTS:
+    virtual void idle();
 
 private:
     mesh_s m_mesh;
@@ -48,22 +47,12 @@ private:
     QList<vector3_s> m_lightpos;
     bool m_dirlighting;
 
-    QPoint m_lastpos;
-    bool m_pressed;
     GLfloat m_cubersens;
-    GLfloat m_movesens;
-    GLfloat m_turnsens;
-    QTimer *m_timer;
     int m_count[3];
     int m_cur[3];
     int m_orientation[3];
 
-    bool m_direction[Direction_Total];
-    bool m_rotation[Rotation_Total];
-
     static const int M_Width = 512;
-    static const int M_Timer_Interval = 100;
-    static const int M_Move_Unit = 10;
     
 };
 

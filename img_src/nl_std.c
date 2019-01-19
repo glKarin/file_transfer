@@ -50,15 +50,6 @@ int nlIsNLTextureStruct(const NL_texture_s *nl)
         NL_RET(NL_INVALID_HEIGHT)
     }
 
-    if(!nl->index_table)
-    {
-        NL_RET(NL_INDEX_TABLE_IS_NULL)
-    }
-
-    if(!nl->color_count)
-    {
-        NL_RET(NL_INVALID_COLOR_TABLE_LENGTH)
-    }
     if(!nl->color_table)
     {
         NL_RET(NL_COLOR_TABLE_IS_NULL)
@@ -80,8 +71,6 @@ int nlFreeNLTexture(NL_texture_s *r)
         goto __Exit;
     }
 
-    if(r->index_table)
-        free(r->index_table);
     if(r->color_table)
         free(r->color_table);
 

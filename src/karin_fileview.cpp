@@ -23,9 +23,15 @@ karin_FileView::~karin_FileView()
 
 void karin_FileView::doubleClicked_slot(const QModelIndex &index)
 {
+    QString path = m_model->filePath(index);
+
     if(m_model->isDir(index))
     {
-        m_model->setPath(m_model->filePath(index));
+        m_model->setPath(path);
+    }
+    else
+    {
+        emit filedblclicked(path);
     }
 }
 

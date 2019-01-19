@@ -27,13 +27,16 @@ karin_NLTMainWindow::~karin_NLTMainWindow()
 
 void karin_NLTMainWindow::init()
 {
+    FIXED_UI(centralWidget(), ui->verticalLayoutWidget)
+
     m_viewer = new karin_NLTViewer(this);
-    ui->horizontalLayout_2->addWidget(m_viewer);
+    ui->verticalLayout->addWidget(m_viewer);
 
     m_filepath = karin_UT::Instance()->getsetting<QString>(SETTING_LAST_OPEN_IMAGE_PATH);
     ui->file_chooser_line->setText(m_filepath);
 
     setWindowTitle(tr("Image Converter"));
+    ui->tools->button(QDialogButtonBox::Save)->setEnabled(false);
 }
 
 void karin_NLTMainWindow::open()

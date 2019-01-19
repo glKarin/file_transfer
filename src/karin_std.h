@@ -48,6 +48,7 @@ bool faptext(const QString &path, const QString &content);
 QString formatuts(qint64 d);
 int randr(int min, int max);
 QByteArray filemd5(const QString &file);
+QByteArray filesha1(const QString &file);
 int fcmp(const QString &f, const QString &s);
 
 

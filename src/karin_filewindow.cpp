@@ -3,8 +3,12 @@
 #include "karin_fsmodel.h"
 #include "karin_fileview.h"
 #include "karin_std.h"
+#include "karin_ut.h"
 
 #include <QDir>
+#include <QUrl>
+#include <QDesktopServices>
+#include <QMessageBox>
 #include <QDebug>
 
 static bool fileinfocmp(const QFileInfo &a, const QFileInfo &b)
@@ -25,8 +29,9 @@ karin_FileWindow::karin_FileWindow(QWidget *parent) :
     init();
     //connect(ui->dir_input, SIGNAL(editTextChanged(const QString &)), this, SLOT(setcurpath(const QString &)));
     connect(ui->dir_input, SIGNAL(activated(const QString &)), this, SLOT(setcurpath(const QString &)));
-    connect(m_view, SIGNAL(reqtransform(const QStringList &, const QString &)), this, SIGNAL(reqtransform(const QStringList &, const QString &)));
+    connect(m_view, SIGNAL(reqtransform(const QStringList &, const QString &)), this, SIGNAL(reqtransfer(const QStringList &, const QString &)));
     connect(m_view, SIGNAL(pathChanged(const QString &)), this, SLOT(settoptext(const QString &)));
+    connect(m_view, SIGNAL(filedblclicked(const QString &)), this, SLOT(filedblclicked_slot(const QString &)));
 }
 
 karin_FileWindow::~karin_FileWindow()
@@ -91,4 +96,26 @@ void karin_FileWindow::settoptext(const QString &dir)
         ui->dir_input->setCurrentIndex(m_dirdrivercount);
     }
     emit curpathChanged(m_dir);
+}
+
+void karin_FileWindow::filedblclicked_slot(const QString &path)
+{
+    QMessageBox::StandardButton r;
+
+    if(karin_UT::Instance()->getsetting<bool>(SETTING_OPEN_FILE_EXTERNALLY))
+    {
+        if(!QDesktopServices::openUrl(path))
+        {
+            QMessageBox::warning(parentWidget(), tr("Warning"), tr("Desktop service can not open file: %1").arg(path));
+        }
+    }
+    else
+    {
+        // confirm copy file
+        r = QMessageBox::question(parentWidget(), tr("Transfer file?"), tr("Transfer file to another window?"), QMessageBox::Yes | QMessageBox::No);
+        if(r == QMessageBox::Yes)
+        {
+            emit reqtransto(QStringList() << path, this);
+        }
+    }
 }

@@ -21,6 +21,7 @@ private:
 private Q_SLOTS:
     void thread_slot(int v) const;
     void enablelog_slot(int v) const;
+    void enableopenfileext_slot(int v) const;
     
 private:
     Ui::karin_SettingDialog *ui;

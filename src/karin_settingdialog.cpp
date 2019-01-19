@@ -28,12 +28,14 @@ void karin_SettingDialog::init()
 
     ut = karin_UT::Instance();
 
+    setFixedSize(size());
     setWindowTitle(tr("Settings"));
 
     ui->enable_log->setChecked(ut->getsetting<bool>(SETTING_ENABLE_LOG));
     ui->thread->setValue(ut->getsetting<int>(SETTING_MAX_WORKING_THREAD));
     ui->thread->setMinimum(1);
     ui->thread->setMaximum(FILE_ENGINE_MAX_WORKING_THREAD);
+    ui->open_path_externally_checkbox->setChecked(ut->getsetting<bool>(SETTING_OPEN_FILE_EXTERNALLY));
 
     ui->log_level->hide();
     ui->log_level_label->hide();
@@ -41,6 +43,7 @@ void karin_SettingDialog::init()
 
     connect(ui->thread, SIGNAL(valueChanged(int)), this, SLOT(thread_slot(int)));
     connect(ui->enable_log, SIGNAL(stateChanged(int)), this, SLOT(enablelog_slot(int)));
+    connect(ui->open_path_externally_checkbox, SIGNAL(stateChanged(int)), this, SLOT(enableopenfileext_slot(int)));
 }
 
 void karin_SettingDialog::thread_slot(int v) const
@@ -60,6 +63,25 @@ void karin_SettingDialog::enablelog_slot(int v) const
         break;
     case Qt::Checked:
         karin_UT::Instance()->setsetting<bool>(SETTING_ENABLE_LOG, true);
+        break;
+    case Qt::PartiallyChecked:
+    default:
+        break;
+    }
+}
+
+void karin_SettingDialog::enableopenfileext_slot(int v) const
+{
+    Qt::CheckState state;
+
+    state = static_cast<Qt::CheckState>(v);
+    switch(state)
+    {
+    case Qt::Unchecked:
+        karin_UT::Instance()->setsetting<bool>(SETTING_OPEN_FILE_EXTERNALLY, false);
+        break;
+    case Qt::Checked:
+        karin_UT::Instance()->setsetting<bool>(SETTING_OPEN_FILE_EXTERNALLY, true);
         break;
     case Qt::PartiallyChecked:
     default:

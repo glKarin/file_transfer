@@ -24,6 +24,7 @@ void Mesa_gluOrtho2D(GLmatrix *mat, float left, float right, float bottom, float
 
 void Mesa_glTransform(float r[3], const float p[3], const GLmatrix *mat);
 void Mesa_glTransform4(float r[4], const float p[4], const GLmatrix *mat);
+void Mesa_glTranspose(GLmatrix *mat);
 void Mesa_FreeGLMatrix(GLmatrix *mat);
 void Mesa_AllocGLMatrix(GLmatrix *mat);
 void Mesa_NormalMatrix(GLmatrix *mat, const GLfloat mv[16]);

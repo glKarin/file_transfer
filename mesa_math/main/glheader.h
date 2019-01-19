@@ -52,6 +52,9 @@
 #define GL_GLEXT_PROTOTYPES
 #ifdef _HARMATTAN
     #include <GLES2/gl2.h>
+    typedef GLfloat GLdouble;
+    typedef short GLhalf;
+    #define GL_DOUBLE GL_FLOAT
 #else // harmattan
 #if defined(_OS_WIN32)
     #if defined(_GLSL)

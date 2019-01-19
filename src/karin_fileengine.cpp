@@ -6,8 +6,24 @@
 #include <QMutexLocker>
 #include <QFileInfo>
 #include <QDateTime>
+#include <QDir>
 #include <QDebug>
 
+const QString Task_Names[] = {
+    QObject::tr("Scan"),
+    QObject::tr("Mkdir"),
+    QObject::tr("Transfer"),
+    QObject::tr("Check"),
+};
+
+const QString Task_State[] = {
+    QObject::tr("ready"),
+    QObject::tr("start"),
+    QObject::tr("pause"),
+    QObject::tr("doing"),
+    QObject::tr("success"),
+    QObject::tr("fail"),
+};
 
 karin_FileEngine::karin_FileEngine(QObject *parent)
     : QObject(parent),
@@ -157,6 +173,7 @@ void karin_FileEngine::pause()
 // É¨ÃèÎÄ¼þ
 int karin_FileEngine::scan()
 {
+    static const QString Fmt = tr("Scan %1: %2");
     int i;
     karin_FileScanner *scanner;
     struct file_porcess_s proc;
@@ -186,7 +203,11 @@ int karin_FileEngine::scan()
     proc.status = PROCESS_STATUS_RUNNING;
     proc.thread = (FileThreadList_t *)(&m_scanners);
     Q_FOREACH(karin_FileScanner *s, m_scanners)
+    {
         s->start();
+        emit updating(0, Fmt.arg(s->m_id).arg(s->m_dirstr),
+                      karin_FileEngine::FileEngine_S, s->m_dirstr, karin_FileEngine::FileEngine_Task_Start, 0);
+    }
     m_process.insert(FileEngine_S, proc);
 
     return i;
@@ -194,7 +215,7 @@ int karin_FileEngine::scan()
 
 void karin_FileEngine::scanning_slot(ftid_t id, const QString &dir, quint32 fcount, quint32 dcount, quint64 fsize)
 {
-    static const QString Fmt = tr("Scanning files: %1, dirs %2, size: %3(%4 bytes), using %5 -> %6");
+    static const QString Fmt = tr("Scanning: %1 files, %2 dirs <br/> %3 size: %4(%5 bytes)");
     QMutexLocker locker(m_mutex);
     Q_UNUSED(locker);
 
@@ -226,12 +247,13 @@ void karin_FileEngine::scanning_slot(ftid_t id, const QString &dir, quint32 fcou
     }
     proc.cur_unix_timestamp = QDateTime::currentMSecsSinceEpoch();
 
-    emit updating(-1, Fmt.arg(filec).arg(dirc).arg(fformats(sizec)).arg(sizec).arg(formatuts(proc.cur_unix_timestamp - proc.start_unix_timestamp)).arg(dir));
+    emit updating(-1, Fmt.arg(filec).arg(dirc).arg(dir).arg(fformats(sizec)).arg(sizec),
+                  -1, QString::null, -1, proc.cur_unix_timestamp - proc.start_unix_timestamp);
 }
 
 void karin_FileEngine::scanningfinished_slot(ftid_t id, bool suc)
 {
-    static const QString Fmt = tr("Scanning finished: find %1 files, %2 dirs, total size: %3(%4 bytes), using %5");
+    static const QString Fmt = tr("Find %1 files, %2 dirs <br/> Total size: %3(%4 bytes)");
     QMutexLocker locker(m_mutex);
     Q_UNUSED(locker);
 
@@ -265,7 +287,8 @@ void karin_FileEngine::scanningfinished_slot(ftid_t id, bool suc)
         for(FileList_t::const_iterator itor = m_files.begin();
             itor != m_files.end(); ++itor)
             m_filec += itor.value().size();
-        emit updating(100, Fmt.arg(m_filec).arg(m_dirs.size()).arg(fformats(m_size)).arg(m_size).arg(formatuts(proc.end_unix_timestamp - proc.start_unix_timestamp)));
+        emit updating(100, Fmt.arg(m_filec).arg(m_dirs.size()).arg(fformats(m_size)).arg(m_size),
+                      karin_FileEngine::FileEngine_S, tr("files"), karin_FileEngine::FileEngine_Task_Success, proc.end_unix_timestamp - proc.start_unix_timestamp);
         sets(karin_FileEngine::FileEngine_Scanned);
     }
 }
@@ -273,6 +296,7 @@ void karin_FileEngine::scanningfinished_slot(ftid_t id, bool suc)
 // mkdir
 int karin_FileEngine::mkdirs()
 {
+    static const QString Fmt = tr("Mkdir %1: count : %2");
     karin_FileDirMaker *dirmker;
     struct file_porcess_s proc;
 
@@ -293,6 +317,8 @@ int karin_FileEngine::mkdirs()
     sets(karin_FileEngine::FileEngine_Mkdir);
     proc.start_unix_timestamp = QDateTime::currentMSecsSinceEpoch();
     dirmker->start();
+    emit updating(0, Fmt.arg(dirmker->m_id).arg(dirmker->m_dirs.size()),
+                  karin_FileEngine::FileEngine_M, dirmker->m_dir->absolutePath(), karin_FileEngine::FileEngine_Task_Start, 0);
     proc.status = PROCESS_STATUS_RUNNING;
     m_process.insert(FileEngine_M, proc);
 
@@ -301,7 +327,7 @@ int karin_FileEngine::mkdirs()
 
 void karin_FileEngine::mkingdir_slot(ftid_t id, const QString &dir, bool suc, quint32 count)
 {
-    static const QString Fmt = tr("Make directory: %1(%2) -> %3, using %4");
+    static const QString Fmt = tr("Make directory count: %1");
     QMutexLocker locker(m_mutex);
     Q_UNUSED(locker);
 
@@ -327,12 +353,13 @@ void karin_FileEngine::mkingdir_slot(ftid_t id, const QString &dir, bool suc, qu
 
     per = (int)((qreal)dirc / (qreal)m_dirs.size() * 100);
     proc.cur_unix_timestamp = QDateTime::currentMSecsSinceEpoch();
-    emit updating(per, Fmt.arg(dirc).arg(suc ? tr("success") : tr("fail")).arg(dir).arg(formatuts(proc.cur_unix_timestamp - proc.start_unix_timestamp)));
+    emit updating(per, Fmt.arg(dirc),
+                  karin_FileEngine::FileEngine_M, dir, suc ? karin_FileEngine::FileEngine_Task_Success : karin_FileEngine::FileEngine_Task_Fail, proc.cur_unix_timestamp - proc.start_unix_timestamp);
 }
 
 void karin_FileEngine::mkingdirfinished_slot(ftid_t id, bool suc)
 {
-    static const QString Fmt = tr("Make directorys finished: %1 success, %2 fail, using %3");
+    static const QString Fmt = tr("Total make directorys %1 success, %2 fail");
     QMutexLocker locker(m_mutex);
     Q_UNUSED(locker);
 
@@ -362,7 +389,8 @@ void karin_FileEngine::mkingdirfinished_slot(ftid_t id, bool suc)
             dirc += s.dir_count;
         }
         proc.end_unix_timestamp = QDateTime::currentMSecsSinceEpoch();
-        emit updating(100, Fmt.arg(dirc).arg(m_dirs.size() - dirc).arg(formatuts(proc.end_unix_timestamp - proc.start_unix_timestamp)));
+        emit updating(100, Fmt.arg(dirc).arg(m_dirs.size() - dirc),
+                      -1, QString::null, -1, proc.end_unix_timestamp - proc.start_unix_timestamp);
 
         trans();
     }
@@ -371,6 +399,7 @@ void karin_FileEngine::mkingdirfinished_slot(ftid_t id, bool suc)
 // ´«Êä
 int karin_FileEngine::trans()
 {
+    static const QString Fmt = tr("Transfer %1: count : %2");
     karin_FileTransfer *transfer;
     struct file_porcess_s proc;
     int i;
@@ -415,7 +444,11 @@ int karin_FileEngine::trans()
     proc.start_unix_timestamp = QDateTime::currentMSecsSinceEpoch();
     proc.status = PROCESS_STATUS_RUNNING;
     Q_FOREACH(karin_FileTransfer *s, m_transfers)
+    {
         s->start();
+        emit updating(0, Fmt.arg(s->m_id).arg(s->m_files.size()),
+                      karin_FileEngine::FileEngine_T, s->m_dstdir->absolutePath(), karin_FileEngine::FileEngine_Task_Start, 0);
+    }
     m_process.insert(FileEngine_T, proc);
 
     return i;
@@ -423,7 +456,7 @@ int karin_FileEngine::trans()
 
 void karin_FileEngine::transfer_slot(ftid_t id, const QString &file, bool suc, quint32 c, quint64 size)
 {
-    static const QString Fmt = tr("Transfer file: %1 -> %2, count: %3, size: %4(%5 bytes), using %6");
+    static const QString Fmt = tr("Transfer count: %1 <br/> Size: %2(%3 bytes)");
     QMutexLocker locker(m_mutex);
     Q_UNUSED(locker);
 
@@ -453,12 +486,13 @@ void karin_FileEngine::transfer_slot(ftid_t id, const QString &file, bool suc, q
     proc.cur_unix_timestamp = QDateTime::currentMSecsSinceEpoch();
     per = (int)((qreal)filec / (qreal)m_filec * 100);
 
-    emit updating(per, Fmt.arg(file).arg(suc ? tr("success") : tr("fail")).arg(filec).arg(fformats(sizec)).arg(sizec).arg(formatuts(proc.cur_unix_timestamp - proc.start_unix_timestamp)));
+    emit updating(per, Fmt.arg(filec).arg(fformats(sizec)).arg(sizec),
+                  karin_FileEngine::FileEngine_T, file, suc ? karin_FileEngine::FileEngine_Task_Success : karin_FileEngine::FileEngine_Task_Fail, proc.cur_unix_timestamp - proc.start_unix_timestamp);
 }
 
 void karin_FileEngine::transferfinished_slot(ftid_t id, bool suc)
 {
-    static const QString Fmt = tr("Transfer finished: %1 success, %2 fail, total size: %3(%4 bytes), using %5");
+    static const QString Fmt = tr("Total transfer: %1 success, %2 fail <br/> Total size: %3(%4 bytes)");
     QMutexLocker locker(m_mutex);
     Q_UNUSED(locker);
 
@@ -496,7 +530,8 @@ void karin_FileEngine::transferfinished_slot(ftid_t id, bool suc)
             failc += itor.value().dir_count;
             size += itor.value().size;
         }
-        emit updating(100, Fmt.arg(succ).arg(failc).arg(fformats(size)).arg(size).arg(formatuts(proc.end_unix_timestamp - proc.start_unix_timestamp)));
+        emit updating(100, Fmt.arg(succ).arg(failc).arg(fformats(size)).arg(size),
+                      -1, QString::null, -1, proc.end_unix_timestamp - proc.start_unix_timestamp);
         sets(karin_FileEngine::FileEngine_Transed);
     }
 }
@@ -504,6 +539,7 @@ void karin_FileEngine::transferfinished_slot(ftid_t id, bool suc)
 // MD5
 int karin_FileEngine::check()
 {
+    static const QString Fmt = tr("Transfer %1: count : %2");
     karin_FileChecker *checker;
     struct file_porcess_s proc;
     int i;
@@ -548,7 +584,11 @@ int karin_FileEngine::check()
     proc.start_unix_timestamp = QDateTime::currentMSecsSinceEpoch();
     proc.status = PROCESS_STATUS_RUNNING;
     Q_FOREACH(karin_FileChecker *s, m_checkers)
+    {
         s->start();
+        emit updating(0, Fmt.arg(s->m_id).arg(s->m_files.size()),
+                      karin_FileEngine::FileEngine_T, s->m_dstdir->absolutePath(), karin_FileEngine::FileEngine_Task_Start, 0);
+    }
     m_process.insert(FileEngine_C, proc);
 
     return i;
@@ -556,7 +596,7 @@ int karin_FileEngine::check()
 
 void karin_FileEngine::check_slot(ftid_t id, const QString &file, bool suc, quint32 sc, quint32 fc)
 {
-    static const QString Fmt = tr("Check file: %1 -> %2, %3 success, %4 fail, using %5");
+    static const QString Fmt = tr("Check: %1 success, %2 fail");
     QMutexLocker locker(m_mutex);
     Q_UNUSED(locker);
 
@@ -586,12 +626,13 @@ void karin_FileEngine::check_slot(ftid_t id, const QString &file, bool suc, quin
     proc.cur_unix_timestamp = QDateTime::currentMSecsSinceEpoch();
     per = (int)((qreal)(succ + failc) / (qreal)m_filec * 100);
 
-    emit updating(per, Fmt.arg(file).arg(suc ? tr("success") : tr("fail")).arg(succ).arg(failc).arg(formatuts(proc.cur_unix_timestamp - proc.start_unix_timestamp)));
+    emit updating(per, Fmt.arg(succ).arg(failc),
+                  karin_FileEngine::FileEngine_C, file, suc ? karin_FileEngine::FileEngine_Task_Success : karin_FileEngine::FileEngine_Task_Fail, proc.cur_unix_timestamp - proc.start_unix_timestamp);
 }
 
 void karin_FileEngine::checkfinished_slot(ftid_t id, bool suc)
 {
-    static const QString Fmt = tr("Check finished: %1 success, %2 fail, using %3");
+    static const QString Fmt = tr("Check: %1 success, %2 fail");
     QMutexLocker locker(m_mutex);
     Q_UNUSED(locker);
 
@@ -626,7 +667,8 @@ void karin_FileEngine::checkfinished_slot(ftid_t id, bool suc)
             succ += itor.value().file_count;
             failc += itor.value().dir_count;
         }
-        emit updating(100, Fmt.arg(succ).arg(failc).arg(formatuts(proc.end_unix_timestamp - proc.start_unix_timestamp)));
+        emit updating(100, Fmt.arg(succ).arg(failc),
+                      -1, QString::null, -1, proc.end_unix_timestamp - proc.start_unix_timestamp);
         sets(karin_FileEngine::FileEngine_Done);
     }
 }

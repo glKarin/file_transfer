@@ -24,8 +24,9 @@ private:
     void init();
 
 private Q_SLOTS:
-    void reqtransform_slot(const QStringList &src, const QString &dst);
-    void updating_slot(int per, const QString &dir);
+    void reqtransfer_slot(const QStringList &src, const QString &dst);
+    void reqtransto_slot(const QStringList &src, karin_FileWindow *sender);
+    void updating_slot(int per, const QString &dir, int type, const QString &file, int suc, quint64 time);
     void showabout();
     void changelog();
     void stateChanged_slot();
@@ -37,6 +38,9 @@ private Q_SLOTS:
     void reqnext_slot();
     void gl();
     void nlt();
+    void filecmp();
+    void showhelp();
+    void imgcompresslog();
     
 private:
     Ui::MainWindow *ui;

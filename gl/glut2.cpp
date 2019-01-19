@@ -58,7 +58,7 @@ static const GLfloat CubePlane4Normal[] =
     0.0, -1.0, 0.0
 };
 
-#define FULL_COLOR_FACTOR 0.2
+#define FULL_COLOR_FACTOR 1.0
 const GLfloat CubePlane4Color[] = {
         // Õý
         FULL_COLOR_FACTOR, 0.0, 0.0, 1.0,
@@ -239,7 +239,7 @@ void karinPlane_MinMax(const GLfloat v1[3], const GLfloat v2[3], material_s *r)
         0.0, 1.0, 0.0,
     };
 
-#define PLANE_FULL_COLOR_FACTOR 0.1
+#define PLANE_FULL_COLOR_FACTOR 1.0
     const GLfloat color[] = {
         PLANE_FULL_COLOR_FACTOR, PLANE_FULL_COLOR_FACTOR, PLANE_FULL_COLOR_FACTOR, 1.0,
         PLANE_FULL_COLOR_FACTOR, PLANE_FULL_COLOR_FACTOR, PLANE_FULL_COLOR_FACTOR, 1.0,

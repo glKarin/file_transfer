@@ -24,11 +24,13 @@ public Q_SLOTS:
 
 Q_SIGNALS:
     void curpathChanged(const QString &path);
-    void reqtransform(const QStringList &src, const QString &dst);
+    void reqtransfer(const QStringList &src, const QString &dst);
+    void reqtransto(const QStringList &src, karin_FileWindow *self);
 
 private Q_SLOTS:
     void returnPressed_slot();
     void settoptext(const QString &dir);
+    void filedblclicked_slot(const QString &path);
 
 private:
     void init();

@@ -69,14 +69,9 @@ int nlReadFile(NL_texture_s *r, const char *file)
     NL_FREAD(&r->height, 4, 1)
 
     size = r->width * r->height;
-    r->index_table = (uint32_t *)calloc(size, 4);
-    NL_FREAD(r->index_table, 4, size)
 
-
-    NL_FREAD(&r->color_count, 4, 1)
-    r->color_table = (uint8_t *)calloc(r->color_count, s);
-    NL_FREAD(r->color_table, s, r->color_count)
-
+    r->color_table = (uint8_t *)calloc(size * s, 1);
+    NL_FREAD(r->color_table, 1, size * s)
 
 __Exit:
     if(f)
@@ -138,12 +133,7 @@ int nlWriteFile(const NL_texture_s *r, const char *file)
     NL_FWRITE(&r->width, 4, 1)
     NL_FWRITE(&r->height, 4, 1)
 
-    NL_FWRITE(r->index_table, 4, r->width * r->height)
-
-
-    NL_FWRITE(&r->color_count, 4, 1)
-    NL_FWRITE(r->color_table, s, r->color_count)
-
+    NL_FWRITE(r->color_table, 1, r->width * r->height * s)
 
 __Exit:
     if(f)

@@ -29,9 +29,6 @@ typedef struct _NL_texture_s
     uint16_t width;
     uint16_t height;
 
-    uint32_t *index_table;
-
-    uint32_t color_count;
     uint8_t *color_table;
 } NL_texture_s;
 
